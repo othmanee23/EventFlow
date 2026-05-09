@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 import type { Task, TaskStatus } from "@/types/task";
 
 type KanbanColumnProps = {
+  onTaskOpen: (task: Task) => void;
   status: TaskStatus;
   statusLabel: string;
   tasks: Task[];
 };
 
-export function KanbanColumn({ status, statusLabel, tasks }: KanbanColumnProps) {
+export function KanbanColumn({ onTaskOpen, status, statusLabel, tasks }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: status,
   });
@@ -31,7 +32,7 @@ export function KanbanColumn({ status, statusLabel, tasks }: KanbanColumnProps) 
       </div>
       <div className="grid gap-3">
         {tasks.length > 0 ? (
-          tasks.map((task) => <DraggableTaskCard key={task.id} task={task} />)
+          tasks.map((task) => <DraggableTaskCard key={task.id} onOpen={onTaskOpen} task={task} />)
         ) : (
           <EmptyState title="No tasks" description="Tasks moved into this status will appear here." />
         )}

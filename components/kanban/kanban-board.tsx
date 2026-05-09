@@ -13,6 +13,7 @@ import {
 import { useMemo, useState } from "react";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { TaskCard } from "@/components/kanban/task-card";
+import { TaskDetailModal } from "@/components/kanban/task-detail-modal";
 import { TASK_STATUS_ORDER, TASK_STATUSES } from "@/lib/constants";
 import { getTasksByStatus } from "@/features/tasks/task-service";
 import type { Task, TaskStatus } from "@/types/task";
@@ -24,6 +25,7 @@ type KanbanBoardProps = {
 export function KanbanBoard({ tasks }: KanbanBoardProps) {
   const [boardTasks, setBoardTasks] = useState(tasks);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -35,6 +37,10 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
   const activeTask = useMemo(
     () => boardTasks.find((task) => task.id === activeTaskId),
     [activeTaskId, boardTasks],
+  );
+  const selectedTask = useMemo(
+    () => boardTasks.find((task) => task.id === selectedTaskId),
+    [boardTasks, selectedTaskId],
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -80,6 +86,7 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
         {TASK_STATUS_ORDER.map((status) => (
           <KanbanColumn
             key={status}
+            onTaskOpen={(task) => setSelectedTaskId(task.id)}
             status={status}
             statusLabel={TASK_STATUSES[status]}
             tasks={getTasksByStatus(boardTasks, status)}
@@ -87,6 +94,7 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
         ))}
       </section>
       <DragOverlay>{activeTask ? <TaskCard task={activeTask} /> : null}</DragOverlay>
+      <TaskDetailModal onClose={() => setSelectedTaskId(null)} open={Boolean(selectedTask)} task={selectedTask} />
     </DndContext>
   );
 }
