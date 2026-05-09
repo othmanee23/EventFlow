@@ -1,7 +1,6 @@
 import { LockKeyhole } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
@@ -17,16 +16,9 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500">Sign in to coordinate event preparation work.</p>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4">
-            <Input label="Email" name="email" type="email" placeholder="name@pcns.org" />
-            <Input label="Password" name="password" type="password" placeholder="Minimum 8 characters" />
-            <Button type="submit" className="mt-2 w-full">
-              Sign in
-            </Button>
-          </form>
+          <LoginForm />
         </CardContent>
       </Card>
     </main>
   );
 }
-
