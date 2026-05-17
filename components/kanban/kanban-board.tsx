@@ -74,6 +74,28 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
     setActiveTaskId(null);
   }
 
+  function handleChecklistToggle(taskId: string, itemId: string, completed: boolean) {
+    setBoardTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              checklist: task.checklist.map((item) =>
+                item.id === itemId
+                  ? {
+                      ...item,
+                      completed,
+                      completedAt: completed ? new Date().toISOString() : undefined,
+                    }
+                  : item,
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          : task,
+      ),
+    );
+  }
+
   return (
     <DndContext
       collisionDetection={pointerWithin}
@@ -94,7 +116,12 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
         ))}
       </section>
       <DragOverlay>{activeTask ? <TaskCard task={activeTask} /> : null}</DragOverlay>
-      <TaskDetailModal onClose={() => setSelectedTaskId(null)} open={Boolean(selectedTask)} task={selectedTask} />
+      <TaskDetailModal
+        onChecklistToggle={handleChecklistToggle}
+        onClose={() => setSelectedTaskId(null)}
+        open={Boolean(selectedTask)}
+        task={selectedTask}
+      />
     </DndContext>
   );
 }
