@@ -13,6 +13,16 @@ export function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+export function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export function initials(name: string) {
   return name
     .split(" ")
@@ -21,4 +31,3 @@ export function initials(name: string) {
     .slice(0, 2)
     .toUpperCase();
 }
-
