@@ -1,17 +1,19 @@
 import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
+import { ChecklistSection } from "@/components/checklists/checklist-section";
 import { getChecklistProgress } from "@/features/tasks/task-service";
 import { TASK_CATEGORIES, TASK_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import type { Task } from "@/types/task";
 
 type TaskDetailModalProps = {
+  onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
   onClose: () => void;
   open: boolean;
   task?: Task;
 };
 
-export function TaskDetailModal({ onClose, open, task }: TaskDetailModalProps) {
+export function TaskDetailModal({ onChecklistToggle, onClose, open, task }: TaskDetailModalProps) {
   if (!task) {
     return null;
   }
@@ -64,10 +66,15 @@ export function TaskDetailModal({ onClose, open, task }: TaskDetailModalProps) {
           </div>
         </section>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4">
           <section className="rounded-md border border-border-soft p-4">
             <h3 className="text-sm font-semibold text-slate-950">Checklist</h3>
-            <p className="mt-2 text-sm text-slate-500">{task.checklist.length} items attached to this task.</p>
+            <div className="mt-3">
+              <ChecklistSection
+                items={task.checklist}
+                onToggle={(item, completed) => onChecklistToggle(task.id, item.id, completed)}
+              />
+            </div>
           </section>
           <section className="rounded-md border border-border-soft p-4">
             <h3 className="text-sm font-semibold text-slate-950">Comments</h3>
