@@ -13,7 +13,7 @@ import type { Task } from "@/types/task";
 
 type TaskDetailModalProps = {
   onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
-  onCommentAdd: (taskId: string, body: string) => void;
+  onCommentAdd: (taskId: string, body: string) => Promise<boolean>;
   onClose: () => void;
   open: boolean;
   task?: Task;
@@ -39,7 +39,7 @@ export function TaskDetailModal({ onChecklistToggle, onClose, onCommentAdd, open
 type TaskDetailModalContentProps = {
   onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
   onClose: () => void;
-  onCommentAdd: (taskId: string, body: string) => void;
+  onCommentAdd: (taskId: string, body: string) => Promise<boolean>;
   open: boolean;
   task: Task;
 };
@@ -53,9 +53,10 @@ function TaskDetailModalContent({
 }: TaskDetailModalContentProps) {
   const [commentBody, setCommentBody] = useState("");
   const [commentError, setCommentError] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const checklistProgress = getChecklistProgress(task.checklist);
 
-  function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedBody = commentBody.trim();
@@ -65,9 +66,20 @@ function TaskDetailModalContent({
       return;
     }
 
-    onCommentAdd(task.id, trimmedBody);
-    setCommentBody("");
-    setCommentError("");
+    setCommentSubmitting(true);
+
+    try {
+      const added = await onCommentAdd(task.id, trimmedBody);
+
+      if (added) {
+        setCommentBody("");
+        setCommentError("");
+      } else {
+        setCommentError("Comment could not be saved.");
+      }
+    } finally {
+      setCommentSubmitting(false);
+    }
   }
 
   return (
@@ -147,7 +159,9 @@ function TaskDetailModalContent({
               </label>
               {commentError ? <p className="text-xs font-medium text-red-600">{commentError}</p> : null}
               <div className="flex justify-end">
-                <Button type="submit">Add comment</Button>
+                <Button disabled={commentSubmitting} type="submit">
+                  {commentSubmitting ? "Adding..." : "Add comment"}
+                </Button>
               </div>
             </form>
           </section>
