@@ -2,29 +2,39 @@
 
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { CreateProjectModal } from "@/components/projects/create-project-modal";
 import { ProjectCard } from "@/components/projects/project-card";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { PROJECT_STATUSES } from "@/lib/constants";
+import { canCreateProject } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import type { Project, ProjectStatus } from "@/types/project";
+import type { User } from "@/types/user";
 
 type ProjectListProps = {
   projects: Project[];
+  users: User[];
+  viewer: User;
 };
 
 type StatusFilter = "all" | ProjectStatus;
 
 const statusFilters: StatusFilter[] = ["all", "planning", "active", "completed", "on_hold"];
 
-export function ProjectList({ projects }: ProjectListProps) {
+export function ProjectList({ projects, users, viewer }: ProjectListProps) {
+  const [localProjects, setLocalProjects] = useState<Project[]>(projects);
+  const [localProjectIds, setLocalProjectIds] = useState<string[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const canCreate = canCreateProject(viewer.role);
 
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return projects.filter((project) => {
+    return localProjects.filter((project) => {
       const matchesStatus = statusFilter === "all" || project.status === statusFilter;
       const matchesQuery =
         normalizedQuery.length === 0 ||
@@ -34,14 +44,24 @@ export function ProjectList({ projects }: ProjectListProps) {
 
       return matchesStatus && matchesQuery;
     });
-  }, [projects, query, statusFilter]);
+  }, [localProjects, query, statusFilter]);
 
-  if (projects.length === 0) {
-    return <EmptyState title="No projects" description="Create the first event project once project creation is enabled." />;
+  function handleCreateProject(project: Project) {
+    setLocalProjects((currentProjects) => [project, ...currentProjects]);
+    setLocalProjectIds((currentProjectIds) => [project.id, ...currentProjectIds]);
+    setQuery("");
+    setStatusFilter("all");
   }
 
   return (
     <section className="grid gap-5">
+      <div className="flex flex-col gap-4 rounded-md border border-border-soft bg-white p-5 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-950">Projects</h2>
+          <p className="mt-1 text-sm text-slate-500">Track event preparation from planning through completion.</p>
+        </div>
+        {canCreate ? <Button onClick={() => setCreateModalOpen(true)}>Create project</Button> : null}
+      </div>
       <div className="rounded-md border border-border-soft bg-white p-4">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="relative">
@@ -76,14 +96,16 @@ export function ProjectList({ projects }: ProjectListProps) {
           </div>
         </div>
         <div className="mt-4 text-sm text-slate-500">
-          Showing {filteredProjects.length} of {projects.length} projects
+          Showing {filteredProjects.length} of {localProjects.length} projects
         </div>
       </div>
 
-      {filteredProjects.length > 0 ? (
+      {localProjects.length === 0 ? (
+        <EmptyState title="No projects" description="Create the first event project once project creation is enabled." />
+      ) : filteredProjects.length > 0 ? (
         <div className="grid gap-4">
           {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard disableNavigation={localProjectIds.includes(project.id)} key={project.id} project={project} />
           ))}
         </div>
       ) : (
@@ -92,6 +114,12 @@ export function ProjectList({ projects }: ProjectListProps) {
           description="Adjust the search terms or status filter to find another project."
         />
       )}
+      <CreateProjectModal
+        onClose={() => setCreateModalOpen(false)}
+        onCreate={handleCreateProject}
+        open={createModalOpen}
+        users={users}
+      />
     </section>
   );
 }
