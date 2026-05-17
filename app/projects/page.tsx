@@ -4,10 +4,12 @@ import { getCurrentSession } from "@/features/auth/auth-service";
 import { getProjects } from "@/features/projects/project-service";
 import { getUsers } from "@/features/users/user-service";
 
-export default function ProjectsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ProjectsPage() {
   const session = getCurrentSession();
-  const projects = getProjects();
-  const users = getUsers();
+  const projects = await getProjects();
+  const users = await getUsers();
 
   return (
     <AppShell user={session.user} title="Projects">

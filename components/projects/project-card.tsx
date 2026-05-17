@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarDays, ListChecks, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProjectProgress } from "@/features/projects/project-service";
+import { getProjectProgress } from "@/features/projects/project-utils";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import type { Project } from "@/types/project";

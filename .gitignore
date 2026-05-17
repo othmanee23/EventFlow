@@ -19,5 +19,8 @@ pnpm-debug.log*
 .env
 .env*.local
 
+# prisma
+/prisma/generated/prisma
+
 # system
 .DS_Store
