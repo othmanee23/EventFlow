@@ -8,10 +8,11 @@ import { formatDate } from "@/lib/utils";
 import type { Project } from "@/types/project";
 
 type ProjectCardProps = {
+  disableNavigation?: boolean;
   project: Project;
 };
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ disableNavigation = false, project }: ProjectCardProps) {
   const progress = getProjectProgress(project);
 
   return (
@@ -21,7 +22,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <div>
             <Badge variant={project.status === "completed" ? "green" : "blue"}>{PROJECT_STATUSES[project.status]}</Badge>
             <CardTitle className="mt-3 text-lg">
-              <Link href={`/projects/${project.id}`}>{project.name}</Link>
+              {disableNavigation ? (
+                <span>{project.name}</span>
+              ) : (
+                <Link href={`/projects/${project.id}`}>{project.name}</Link>
+              )}
             </CardTitle>
           </div>
           <span className="text-sm font-semibold text-brand-blue">{progress}%</span>
@@ -50,4 +55,3 @@ export function ProjectCard({ project }: ProjectCardProps) {
     </Card>
   );
 }
-
