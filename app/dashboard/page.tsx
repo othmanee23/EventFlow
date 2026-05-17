@@ -6,9 +6,11 @@ import { getCurrentSession } from "@/features/auth/auth-service";
 import { getUpcomingDeadlines } from "@/features/dashboard/dashboard-service";
 import { getProjects } from "@/features/projects/project-service";
 
-export default function DashboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
   const session = getCurrentSession();
-  const projects = getProjects();
+  const projects = await getProjects();
   const deadlines = getUpcomingDeadlines(projects);
 
   return (

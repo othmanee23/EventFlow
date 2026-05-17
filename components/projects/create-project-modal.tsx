@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createProjectFromInput } from "@/features/projects/project-service";
+import { createProjectFromInput } from "@/features/projects/project-utils";
 import type { Project } from "@/types/project";
 import type { User } from "@/types/user";
 
