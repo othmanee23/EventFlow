@@ -39,9 +39,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </div>
           </div>
         </section>
-        <KanbanBoard tasks={project.tasks} />
+        <KanbanBoard tasks={project.tasks} user={session.user} />
       </div>
     </AppShell>
   );
 }
-

@@ -17,12 +17,14 @@ import { TaskDetailModal } from "@/components/kanban/task-detail-modal";
 import { TASK_STATUS_ORDER, TASK_STATUSES } from "@/lib/constants";
 import { getTasksByStatus } from "@/features/tasks/task-service";
 import type { Task, TaskStatus } from "@/types/task";
+import type { User } from "@/types/user";
 
 type KanbanBoardProps = {
   tasks: Task[];
+  user: User;
 };
 
-export function KanbanBoard({ tasks }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
   const [boardTasks, setBoardTasks] = useState(tasks);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -96,6 +98,31 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
     );
   }
 
+  function handleCommentAdd(taskId: string, body: string) {
+    const createdAt = new Date().toISOString();
+
+    setBoardTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: [
+                ...task.comments,
+                {
+                  id: `comment-${taskId}-${createdAt}`,
+                  taskId,
+                  author: user,
+                  body,
+                  createdAt,
+                },
+              ],
+              updatedAt: createdAt,
+            }
+          : task,
+      ),
+    );
+  }
+
   return (
     <DndContext
       collisionDetection={pointerWithin}
@@ -117,6 +144,7 @@ export function KanbanBoard({ tasks }: KanbanBoardProps) {
       </section>
       <DragOverlay>{activeTask ? <TaskCard task={activeTask} /> : null}</DragOverlay>
       <TaskDetailModal
+        onCommentAdd={handleCommentAdd}
         onChecklistToggle={handleChecklistToggle}
         onClose={() => setSelectedTaskId(null)}
         open={Boolean(selectedTask)}
