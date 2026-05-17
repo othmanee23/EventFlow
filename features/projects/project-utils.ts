@@ -11,6 +11,30 @@ export type CreateProjectInput = {
   name: string;
 };
 
+export type CreateProjectErrors = Partial<Record<"eventDate" | "leaderId" | "name", string>>;
+
+export function validateCreateProjectInput(input: CreateProjectInput): CreateProjectErrors {
+  const errors: CreateProjectErrors = {};
+
+  if (!input.name.trim()) {
+    errors.name = "Project name is required.";
+  }
+
+  if (!input.eventDate) {
+    errors.eventDate = "Event date is required.";
+  }
+
+  if (!input.leaderId) {
+    errors.leaderId = "Leader is required.";
+  }
+
+  return errors;
+}
+
+export function hasCreateProjectErrors(errors: CreateProjectErrors) {
+  return Object.keys(errors).length > 0;
+}
+
 export function getProjectProgress(project: Project) {
   if (project.tasks.length === 0) {
     return 0;
@@ -58,7 +82,7 @@ function createDefaultTasks(projectId: string, dueDate: string, assignee: User, 
   }));
 }
 
-function slugify(value: string) {
+export function slugify(value: string) {
   const slug = value
     .trim()
     .toLowerCase()

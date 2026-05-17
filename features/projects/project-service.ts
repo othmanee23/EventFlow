@@ -3,7 +3,7 @@ import { mockProjects } from "@/lib/mock-data";
 import { getPrisma } from "@/lib/prisma";
 import type { Project } from "@/types/project";
 
-const projectInclude = {
+export const projectInclude = {
   leader: true,
   members: {
     include: {
