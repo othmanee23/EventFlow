@@ -46,9 +46,11 @@ export function ProjectList({ projects, users, viewer }: ProjectListProps) {
     });
   }, [localProjects, query, statusFilter]);
 
-  function handleCreateProject(project: Project) {
+  function handleCreateProject(project: Project, options?: { disableNavigation?: boolean }) {
     setLocalProjects((currentProjects) => [project, ...currentProjects]);
-    setLocalProjectIds((currentProjectIds) => [project.id, ...currentProjectIds]);
+    if (options?.disableNavigation) {
+      setLocalProjectIds((currentProjectIds) => [project.id, ...currentProjectIds]);
+    }
     setQuery("");
     setStatusFilter("all");
   }

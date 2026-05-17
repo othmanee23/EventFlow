@@ -7,9 +7,11 @@ import { getCurrentSession } from "@/features/auth/auth-service";
 import { getUsers } from "@/features/users/user-service";
 import { canManageUsers } from "@/lib/permissions";
 
-export default function UsersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function UsersPage() {
   const session = getCurrentSession();
-  const users = getUsers();
+  const users = await getUsers();
 
   return (
     <AppShell user={session.user} title="Users">

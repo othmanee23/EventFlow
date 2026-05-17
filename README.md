@@ -9,7 +9,8 @@ EventFlow is an internal event coordination platform for the Policy Center for t
 - TypeScript
 - Tailwind CSS
 - Component-based UI architecture
-- Mock data for the first setup branch
+- PostgreSQL with Prisma ORM
+- Mock fallback data until a database is configured and seeded
 
 ## Getting Started
 
@@ -27,12 +28,26 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Database
+
+Copy `.env.example` to `.env` and set `DATABASE_URL` when a PostgreSQL database is available.
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+```
+
+If `DATABASE_URL` is not set, the app continues to use mock data for local development.
+
 ## Scripts
 
 ```bash
 npm run lint
 npm run typecheck
 npm run build
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:studio
 ```
 
 ## Workflow
@@ -44,8 +59,7 @@ npm run build
 
 ## Current Assumptions
 
-- The first version uses mock data.
+- The app uses mock data until the staging PostgreSQL database is configured and seeded.
 - Authentication is mocked until the auth approach is confirmed.
 - UI copy is English until the language strategy is confirmed.
 - Official PCNS brand assets are not yet available in the repository.
-

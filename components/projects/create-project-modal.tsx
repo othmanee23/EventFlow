@@ -4,18 +4,23 @@ import { FormEvent, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createProjectFromInput } from "@/features/projects/project-service";
+import { createProjectAction } from "@/features/projects/project-actions";
+import {
+  createProjectFromInput,
+  hasCreateProjectErrors,
+  validateCreateProjectInput,
+  type CreateProjectErrors,
+  type CreateProjectInput,
+} from "@/features/projects/project-utils";
 import type { Project } from "@/types/project";
 import type { User } from "@/types/user";
 
 type CreateProjectModalProps = {
   onClose: () => void;
-  onCreate: (project: Project) => void;
+  onCreate: (project: Project, options?: { disableNavigation?: boolean }) => void;
   open: boolean;
   users: User[];
 };
-
-type CreateProjectErrors = Partial<Record<"eventDate" | "leaderId" | "name", string>>;
 
 export function CreateProjectModal({ onClose, onCreate, open, users }: CreateProjectModalProps) {
   const leaders = useMemo(() => users.filter((user) => user.role === "admin" || user.role === "leader"), [users]);
@@ -25,49 +30,66 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
   const [leaderId, setLeaderId] = useState(leaders[0]?.id ?? "");
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<CreateProjectErrors>({});
+  const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextErrors: CreateProjectErrors = {};
-
-    if (!name.trim()) {
-      nextErrors.name = "Project name is required.";
-    }
-
-    if (!eventDate) {
-      nextErrors.eventDate = "Event date is required.";
-    }
-
-    if (!leaderId) {
-      nextErrors.leaderId = "Leader is required.";
-    }
+    const input: CreateProjectInput = {
+      name,
+      description,
+      eventDate,
+      leaderId,
+      memberIds,
+    };
+    const nextErrors = validateCreateProjectInput(input);
 
     setErrors(nextErrors);
+    setFormError("");
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (hasCreateProjectErrors(nextErrors)) {
       return;
     }
 
-    const project = createProjectFromInput(
-      {
-        name,
-        description,
-        eventDate,
-        leaderId,
-        memberIds,
-      },
-      users,
-    );
+    setSubmitting(true);
 
-    onCreate(project);
+    try {
+      const result = await createProjectAction(input);
+
+      if (result.success) {
+        onCreate(result.project, { disableNavigation: false });
+        resetForm();
+        onClose();
+        return;
+      }
+
+      if (result.reason === "database_not_configured") {
+        const project = createProjectFromInput(input, users);
+
+        onCreate(project, { disableNavigation: true });
+        resetForm();
+        onClose();
+        return;
+      }
+
+      setErrors(result.errors ?? {});
+      setFormError(result.message);
+    } catch {
+      setFormError("Project creation failed. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function resetForm() {
     setName("");
     setDescription("");
     setEventDate("");
     setLeaderId(leaders[0]?.id ?? "");
     setMemberIds([]);
     setErrors({});
-    onClose();
+    setFormError("");
   }
 
   function toggleMember(userId: string, selected: boolean) {
@@ -79,6 +101,11 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
   return (
     <Modal className="max-w-2xl" onClose={onClose} open={open} title="Create project">
       <form className="grid gap-5" onSubmit={handleSubmit}>
+        {formError ? (
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            {formError}
+          </div>
+        ) : null}
         <Input
           error={errors.name}
           label="Project name"
@@ -156,7 +183,9 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
           <Button onClick={onClose} type="button" variant="secondary">
             Cancel
           </Button>
-          <Button type="submit">Create project</Button>
+          <Button disabled={submitting} type="submit">
+            {submitting ? "Creating..." : "Create project"}
+          </Button>
         </div>
       </form>
     </Modal>

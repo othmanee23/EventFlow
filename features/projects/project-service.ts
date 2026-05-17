@@ -1,78 +1,84 @@
+import { mapDatabaseProjectToProject } from "@/features/projects/project-mappers";
 import { mockProjects } from "@/lib/mock-data";
-import { DEFAULT_TASK_CATEGORIES, TASK_CATEGORIES } from "@/lib/constants";
+import { getPrisma } from "@/lib/prisma";
 import type { Project } from "@/types/project";
-import type { Task } from "@/types/task";
-import type { User } from "@/types/user";
 
-export type CreateProjectInput = {
-  description: string;
-  eventDate: string;
-  leaderId: string;
-  memberIds: string[];
-  name: string;
-};
+export const projectInclude = {
+  leader: true,
+  members: {
+    include: {
+      user: true,
+    },
+  },
+  tasks: {
+    include: {
+      assignee: true,
+      checklist: {
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+      comments: {
+        include: {
+          author: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  },
+} as const;
 
-export function getProjects(): Project[] {
-  return mockProjects;
-}
+export async function getProjects(): Promise<Project[]> {
+  const prisma = getPrisma();
 
-export function getProjectById(projectId: string): Project | undefined {
-  return mockProjects.find((project) => project.id === projectId);
-}
-
-export function getProjectProgress(project: Project) {
-  if (project.tasks.length === 0) {
-    return 0;
+  if (!prisma) {
+    return mockProjects;
   }
 
-  const completedTasks = project.tasks.filter((task) => task.status === "done").length;
-  return Math.round((completedTasks / project.tasks.length) * 100);
+  try {
+    const projects = await prisma.project.findMany({
+      include: projectInclude,
+      orderBy: {
+        eventDate: "asc",
+      },
+    });
+
+    return projects.length > 0 ? projects.map(mapDatabaseProjectToProject) : mockProjects;
+  } catch (error) {
+    console.warn("Falling back to mock projects because the database read failed.", error);
+    return mockProjects;
+  }
 }
 
-export function createProjectFromInput(input: CreateProjectInput, users: User[]): Project {
-  const now = new Date().toISOString();
-  const projectId = slugify(input.name);
-  const leader = users.find((user) => user.id === input.leaderId) ?? users[0];
-  const members = users.filter((user) => input.memberIds.includes(user.id) && user.id !== leader.id);
+export async function getProjectById(projectId: string): Promise<Project | undefined> {
+  const prisma = getPrisma();
 
-  return {
-    id: projectId,
-    name: input.name.trim(),
-    description: input.description.trim(),
-    status: "planning",
-    eventDate: input.eventDate,
-    leader,
-    members,
-    tasks: createDefaultTasks(projectId, input.eventDate, leader, now),
-    createdAt: now,
-    updatedAt: now,
-  };
+  if (!prisma) {
+    return mockProjects.find((project) => project.id === projectId);
+  }
+
+  try {
+    const project = await prisma.project.findFirst({
+      where: {
+        OR: [{ id: projectId }, { slug: projectId }],
+      },
+      include: projectInclude,
+    });
+
+    return project
+      ? mapDatabaseProjectToProject(project)
+      : mockProjects.find((mockProject) => mockProject.id === projectId);
+  } catch (error) {
+    console.warn("Falling back to mock project lookup because the database read failed.", error);
+    return mockProjects.find((project) => project.id === projectId);
+  }
 }
 
-function createDefaultTasks(projectId: string, dueDate: string, assignee: User, now: string): Task[] {
-  return DEFAULT_TASK_CATEGORIES.map((category) => ({
-    id: `${projectId}-${category}`,
-    projectId,
-    title: TASK_CATEGORIES[category],
-    description: `Initial ${TASK_CATEGORIES[category].toLowerCase()} task for this event project.`,
-    category,
-    status: "todo",
-    priority: "medium",
-    dueDate,
-    assignee,
-    checklist: [],
-    comments: [],
-    createdAt: now,
-    updatedAt: now,
-  }));
-}
-
-function slugify(value: string) {
-  const slug = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-
-  return slug || `project-${Date.now()}`;
+export function getMockProjects(): Project[] {
+  return mockProjects;
 }
