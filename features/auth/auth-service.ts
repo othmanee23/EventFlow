@@ -1,52 +1,37 @@
-import { currentUser } from "@/lib/mock-data";
-import type { AuthSession, LoginCredentials, LoginResult, LoginValidationResult } from "@/features/auth/auth-types";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { getUserById } from "@/features/users/user-service";
+import type { AuthSession } from "@/features/auth/auth-types";
 
-const PCNS_EMAIL_PATTERN = /^[^\s@]+@pcns\.org$/i;
+export const AUTH_SESSION_COOKIE = "eventflow_session";
+export const AUTH_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
-export function getCurrentSession(): AuthSession {
+export async function getCurrentSession(): Promise<AuthSession | null> {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get(AUTH_SESSION_COOKIE)?.value;
+
+  if (!userId) {
+    return null;
+  }
+
+  const user = await getUserById(userId);
+
+  if (!user) {
+    return null;
+  }
+
   return {
-    user: currentUser,
-    expiresAt: "2026-12-31T23:59:59.000Z",
+    user,
+    expiresAt: new Date(Date.now() + AUTH_SESSION_MAX_AGE_SECONDS * 1000).toISOString(),
   };
 }
 
-export function validateLoginInput(credentials: LoginCredentials): LoginValidationResult {
-  const errors: LoginValidationResult["errors"] = {};
-  const email = credentials.email.trim();
+export async function getRequiredSession(): Promise<AuthSession> {
+  const session = await getCurrentSession();
 
-  if (!email) {
-    errors.email = "Email is required.";
-  } else if (!PCNS_EMAIL_PATTERN.test(email)) {
-    errors.email = "Use a valid PCNS email address.";
+  if (!session) {
+    redirect("/login");
   }
 
-  if (!credentials.password) {
-    errors.password = "Password is required.";
-  } else if (credentials.password.length < 8) {
-    errors.password = "Password must be at least 8 characters.";
-  }
-
-  return {
-    valid: Object.keys(errors).length === 0,
-    errors,
-  };
-}
-
-export async function mockSignIn(credentials: LoginCredentials): Promise<LoginResult> {
-  const validation = validateLoginInput(credentials);
-
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  if (!validation.valid) {
-    return {
-      success: false,
-      message: "Check the highlighted fields and try again.",
-      errors: validation.errors,
-    };
-  }
-
-  return {
-    success: true,
-    session: getCurrentSession(),
-  };
+  return session;
 }

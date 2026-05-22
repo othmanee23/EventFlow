@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockSignIn, validateLoginInput } from "@/features/auth/auth-service";
+import { signInAction } from "@/features/auth/auth-actions";
+import { validateLoginInput } from "@/features/auth/auth-utils";
 import type { LoginCredentials, LoginFieldErrors } from "@/features/auth/auth-types";
 
 const initialCredentials: LoginCredentials = {
@@ -46,7 +47,7 @@ export function LoginForm() {
     setIsSubmitting(true);
     setFormError("");
 
-    const result = await mockSignIn(credentials);
+    const result = await signInAction(credentials);
 
     setIsSubmitting(false);
 
@@ -57,6 +58,7 @@ export function LoginForm() {
     }
 
     router.push("/dashboard");
+    router.refresh();
   }
 
   return (

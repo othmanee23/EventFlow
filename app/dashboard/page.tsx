@@ -2,14 +2,14 @@ import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
 import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
 import { AppShell } from "@/components/layout/app-shell";
-import { getCurrentSession } from "@/features/auth/auth-service";
+import { getRequiredSession } from "@/features/auth/auth-service";
 import { getUpcomingDeadlines } from "@/features/dashboard/dashboard-service";
 import { getProjects } from "@/features/projects/project-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const session = getCurrentSession();
+  const session = await getRequiredSession();
   const projects = await getProjects();
   const deadlines = getUpcomingDeadlines(projects);
 

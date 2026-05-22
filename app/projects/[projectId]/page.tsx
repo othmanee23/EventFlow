@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
-import { getCurrentSession } from "@/features/auth/auth-service";
+import { getRequiredSession } from "@/features/auth/auth-service";
 import { getProjectById } from "@/features/projects/project-service";
 import { PROJECT_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
@@ -15,7 +15,7 @@ type ProjectPageProps = {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
-  const session = getCurrentSession();
+  const session = await getRequiredSession();
   const project = await getProjectById(projectId);
 
   if (!project) {

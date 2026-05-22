@@ -1,9 +1,19 @@
+import { redirect } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentSession } from "@/features/auth/auth-service";
 import { APP_NAME } from "@/lib/constants";
 
-export default function LoginPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LoginPage() {
+  const session = await getCurrentSession();
+
+  if (session) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-navy px-6 py-12">
       <Card className="w-full max-w-md border-white/10 bg-white">
