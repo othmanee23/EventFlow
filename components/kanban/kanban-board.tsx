@@ -113,7 +113,7 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
 
   async function handleCommentAdd(taskId: string, body: string) {
     const createdAt = new Date().toISOString();
-    const result = await addTaskCommentAction(taskId, user.id, body);
+    const result = await addTaskCommentAction(taskId, body);
 
     if (!result.success && !shouldUseLocalFallback(result.reason)) {
       setBoardError(result.message);

@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getRequiredSession } from "@/features/auth/auth-service";
 import { mapDatabaseCommentToComment } from "@/features/projects/project-mappers";
+import { canUpdateAssignedTask } from "@/lib/permissions";
 import { getPrisma } from "@/lib/prisma";
 import { TaskStatus as DatabaseTaskStatus } from "@/prisma/generated/prisma/enums";
 import type { Comment } from "@/types/comment";
 import type { TaskStatus } from "@/types/task";
 
-type PersistenceFailureReason = "database_not_configured" | "invalid_input" | "not_found" | "database_error";
+type PersistenceFailureReason = "database_not_configured" | "invalid_input" | "not_found" | "forbidden" | "database_error";
 
 type ActionFailure = {
   message: string;
@@ -52,6 +54,7 @@ export async function updateTaskStatusAction(
   taskId: string,
   status: TaskStatus,
 ): Promise<UpdateTaskStatusResult> {
+  const session = await getRequiredSession();
   const prisma = getPrisma();
 
   if (!prisma) {
@@ -64,6 +67,7 @@ export async function updateTaskStatusAction(
         id: taskId,
       },
       select: {
+        assigneeId: true,
         project: {
           select: {
             slug: true,
@@ -74,6 +78,10 @@ export async function updateTaskStatusAction(
 
     if (!existingTask) {
       return createNotFoundResult("Task was not found in the database.");
+    }
+
+    if (!canUpdateAssignedTask(session.user, existingTask.assigneeId)) {
+      return createForbiddenResult("You do not have permission to update this task.");
     }
 
     const task = await prisma.task.update({
@@ -105,6 +113,7 @@ export async function toggleChecklistItemAction(
   itemId: string,
   completed: boolean,
 ): Promise<ToggleChecklistItemResult> {
+  const session = await getRequiredSession();
   const prisma = getPrisma();
 
   if (!prisma) {
@@ -120,6 +129,7 @@ export async function toggleChecklistItemAction(
       select: {
         task: {
           select: {
+            assigneeId: true,
             project: {
               select: {
                 slug: true,
@@ -132,6 +142,10 @@ export async function toggleChecklistItemAction(
 
     if (!existingItem) {
       return createNotFoundResult("Checklist item was not found in the database.");
+    }
+
+    if (!canUpdateAssignedTask(session.user, existingItem.task.assigneeId)) {
+      return createForbiddenResult("You do not have permission to update this checklist item.");
     }
 
     const item = await prisma.checklistItem.update({
@@ -164,9 +178,9 @@ export async function toggleChecklistItemAction(
 
 export async function addTaskCommentAction(
   taskId: string,
-  authorId: string,
   body: string,
 ): Promise<AddTaskCommentResult> {
+  const session = await getRequiredSession();
   const trimmedBody = body.trim();
 
   if (!trimmedBody) {
@@ -185,37 +199,27 @@ export async function addTaskCommentAction(
   }
 
   try {
-    const [task, author] = await Promise.all([
-      prisma.task.findUnique({
-        where: {
-          id: taskId,
-        },
-        select: {
-          project: {
-            select: {
-              slug: true,
-            },
+    const task = await prisma.task.findUnique({
+      where: {
+        id: taskId,
+      },
+      select: {
+        project: {
+          select: {
+            slug: true,
           },
         },
-      }),
-      prisma.user.findUnique({
-        where: {
-          id: authorId,
-        },
-        select: {
-          id: true,
-        },
-      }),
-    ]);
+      },
+    });
 
-    if (!task || !author) {
-      return createNotFoundResult("Task or author was not found in the database.");
+    if (!task) {
+      return createNotFoundResult("Task was not found in the database.");
     }
 
     const comment = await prisma.comment.create({
       data: {
         taskId,
-        authorId,
+        authorId: session.user.id,
         body: trimmedBody,
       },
       include: {
@@ -276,6 +280,15 @@ function createNotFoundResult(message: string): ActionFailure {
     success: false,
     persisted: false,
     reason: "not_found",
+    message,
+  };
+}
+
+function createForbiddenResult(message: string): ActionFailure {
+  return {
+    success: false,
+    persisted: false,
+    reason: "forbidden",
     message,
   };
 }
