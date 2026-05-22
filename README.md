@@ -50,6 +50,7 @@ npm run prisma:deploy
 
 ```bash
 npm run lint
+npm run test
 npm run typecheck
 npm run build
 npm run prisma:generate
@@ -69,6 +70,6 @@ npm run prisma:studio
 ## Current Assumptions
 
 - The app uses mock data until the staging PostgreSQL database is configured and seeded.
-- Authentication is mocked until the auth approach is confirmed.
+- Authentication uses a cookie-backed internal session; password verification remains mocked until the auth approach is confirmed.
 - UI copy is English until the language strategy is confirmed.
 - Official PCNS brand assets are not yet available in the repository.
