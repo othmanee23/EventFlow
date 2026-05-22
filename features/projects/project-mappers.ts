@@ -12,7 +12,7 @@ type DatabaseChecklistItem = {
   taskId: string;
 };
 
-type DatabaseComment = {
+export type DatabaseComment = {
   author: DatabaseUser;
   body: string;
   createdAt: Date;
@@ -123,7 +123,7 @@ function mapDatabaseChecklistItemToChecklistItem(item: DatabaseChecklistItem): C
   };
 }
 
-function mapDatabaseCommentToComment(comment: DatabaseComment): Comment {
+export function mapDatabaseCommentToComment(comment: DatabaseComment): Comment {
   return {
     id: comment.id,
     taskId: comment.taskId,

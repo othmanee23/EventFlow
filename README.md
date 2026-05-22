@@ -35,9 +35,16 @@ Copy `.env.example` to `.env` and set `DATABASE_URL` when a PostgreSQL database 
 ```bash
 npm run prisma:generate
 npm run prisma:migrate
+npm run prisma:seed
 ```
 
 If `DATABASE_URL` is not set, the app continues to use mock data for local development.
+
+For staging or production databases, run migrations with:
+
+```bash
+npm run prisma:deploy
+```
 
 ## Scripts
 
@@ -47,6 +54,8 @@ npm run typecheck
 npm run build
 npm run prisma:generate
 npm run prisma:migrate
+npm run prisma:deploy
+npm run prisma:seed
 npm run prisma:studio
 ```
 

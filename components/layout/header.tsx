@@ -1,6 +1,7 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, LogOut, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { signOutAction } from "@/features/auth/auth-actions";
 import { ROLES } from "@/lib/constants";
 import type { User } from "@/types/user";
 
@@ -36,6 +37,15 @@ export function Header({ title, user }: HeaderProps) {
               <Badge>{ROLES[user.role]}</Badge>
             </div>
           </div>
+          <form action={signOutAction}>
+            <button
+              aria-label="Sign out"
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-border-soft text-slate-500 hover:bg-slate-50"
+              type="submit"
+            >
+              <LogOut aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </form>
         </div>
       </div>
     </header>

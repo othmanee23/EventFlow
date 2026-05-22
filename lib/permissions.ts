@@ -50,5 +50,9 @@ export function canEditProject(role: UserRole) {
 }
 
 export function canMoveTask(user: User, task: Task) {
-  return user.role === "admin" || user.role === "leader" || task.assignee.id === user.id;
+  return canUpdateAssignedTask(user, task.assignee.id);
+}
+
+export function canUpdateAssignedTask(user: Pick<User, "id" | "role">, assigneeId: string) {
+  return user.role === "admin" || user.role === "leader" || user.id === assigneeId;
 }

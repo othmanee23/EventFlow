@@ -10,7 +10,9 @@ import {
   type CreateProjectInput,
   type CreateProjectErrors,
 } from "@/features/projects/project-utils";
+import { getRequiredSession } from "@/features/auth/auth-service";
 import { DEFAULT_TASK_CATEGORIES, TASK_CATEGORIES } from "@/lib/constants";
+import { canCreateProject } from "@/lib/permissions";
 import { getPrisma } from "@/lib/prisma";
 import { TaskCategory, TaskPriority, TaskStatus } from "@/prisma/generated/prisma/enums";
 import type { Project } from "@/types/project";
@@ -29,7 +31,7 @@ type CreateProjectActionResult =
       message: string;
       persisted: false;
       project?: never;
-      reason: "database_not_configured" | "invalid_input" | "invalid_users" | "database_error";
+      reason: "database_not_configured" | "invalid_input" | "invalid_users" | "forbidden" | "database_error";
       success: false;
     };
 
@@ -52,6 +54,17 @@ export async function createProjectAction(input: CreateProjectInput): Promise<Cr
       reason: "invalid_input",
       message: "Check the highlighted fields and try again.",
       errors,
+    };
+  }
+
+  const session = await getRequiredSession();
+
+  if (!canCreateProject(session.user.role)) {
+    return {
+      success: false,
+      persisted: false,
+      reason: "forbidden",
+      message: "You do not have permission to create projects.",
     };
   }
 
