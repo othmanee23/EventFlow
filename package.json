@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -37,6 +38,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "latest",
     "tsx": "^4.22.1",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vitest": "^4.1.7"
   }
 }
