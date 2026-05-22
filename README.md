@@ -66,6 +66,7 @@ npm run prisma:studio
 - Pull requests target `develop`.
 - Nothing is pushed directly to `main`.
 - Each PR should focus on one feature or foundation change.
+- CI runs tests, lint, typecheck, and build for pull requests into `develop` and `main`.
 
 ## Current Assumptions
 
