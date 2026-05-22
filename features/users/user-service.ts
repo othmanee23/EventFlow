@@ -43,6 +43,30 @@ export async function getUserById(userId: string): Promise<User | undefined> {
   }
 }
 
+export async function getUserByEmail(email: string): Promise<User | undefined> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const prisma = getPrisma();
+
+  if (!prisma) {
+    return mockUsers.find((user) => user.email.toLowerCase() === normalizedEmail);
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: normalizedEmail,
+      },
+    });
+
+    return user
+      ? mapDatabaseUserToUser(user)
+      : mockUsers.find((mockUser) => mockUser.email.toLowerCase() === normalizedEmail);
+  } catch (error) {
+    console.warn("Falling back to mock user email lookup because the database read failed.", error);
+    return mockUsers.find((user) => user.email.toLowerCase() === normalizedEmail);
+  }
+}
+
 export function getMockUsers(): User[] {
   return mockUsers;
 }

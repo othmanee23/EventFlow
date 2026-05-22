@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { RolePermissions } from "@/components/users/role-permissions";
 import { UsersRoleSummary } from "@/components/users/users-role-summary";
 import { UsersTable } from "@/components/users/users-table";
-import { getCurrentSession } from "@/features/auth/auth-service";
+import { getRequiredSession } from "@/features/auth/auth-service";
 import { getUsers } from "@/features/users/user-service";
 import { canManageUsers } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
-  const session = getCurrentSession();
+  const session = await getRequiredSession();
   const users = await getUsers();
 
   return (
