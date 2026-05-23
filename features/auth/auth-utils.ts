@@ -2,6 +2,7 @@ import type { LoginCredentials, LoginValidationResult } from "@/features/auth/au
 
 const PCNS_EMAIL_PATTERN = /^[^\s@]+@pcns\.org$/i;
 const DEFAULT_EVENTFLOW_LOGIN_PASSWORD = "password123";
+const DEFAULT_POST_LOGIN_PATH = "/dashboard";
 
 export function validateLoginInput(credentials: LoginCredentials): LoginValidationResult {
   const errors: LoginValidationResult["errors"] = {};
@@ -32,4 +33,20 @@ export function getEventFlowLoginPassword() {
 
 export function isLoginPasswordValid(password: string) {
   return password === getEventFlowLoginPassword();
+}
+
+export function getSafePostLoginPath(nextPath: string | null | undefined) {
+  if (!nextPath) {
+    return DEFAULT_POST_LOGIN_PATH;
+  }
+
+  if (!nextPath.startsWith("/") || nextPath.startsWith("//")) {
+    return DEFAULT_POST_LOGIN_PATH;
+  }
+
+  if (nextPath.startsWith("/login")) {
+    return DEFAULT_POST_LOGIN_PATH;
+  }
+
+  return nextPath;
 }

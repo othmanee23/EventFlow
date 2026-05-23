@@ -3,15 +3,24 @@ import { LockKeyhole } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentSession } from "@/features/auth/auth-service";
+import { getSafePostLoginPath } from "@/features/auth/auth-utils";
 import { APP_NAME } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{
+    next?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { next } = await searchParams;
+  const redirectPath = getSafePostLoginPath(next);
   const session = await getCurrentSession();
 
   if (session) {
-    redirect("/dashboard");
+    redirect(redirectPath);
   }
 
   return (
@@ -26,7 +35,7 @@ export default async function LoginPage() {
           <p className="text-sm text-slate-500">Sign in to coordinate event preparation work.</p>
         </CardHeader>
         <CardContent>
-          <LoginForm />
+          <LoginForm redirectTo={redirectPath} />
         </CardContent>
       </Card>
     </main>
