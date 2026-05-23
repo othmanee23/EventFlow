@@ -46,6 +46,10 @@ For staging or production databases, run migrations with:
 npm run prisma:deploy
 ```
 
+## Deployment
+
+See [docs/deployment.md](docs/deployment.md) for the Vercel staging strategy, environment variables, migration flow, and smoke checks.
+
 ## Scripts
 
 ```bash
@@ -71,6 +75,6 @@ npm run prisma:studio
 ## Current Assumptions
 
 - The app uses mock data until the staging PostgreSQL database is configured and seeded.
-- Authentication uses a cookie-backed internal session; password verification remains mocked until the auth approach is confirmed.
+- Authentication uses a cookie-backed internal session and a shared environment password (`EVENTFLOW_LOGIN_PASSWORD`) as a temporary guard.
 - UI copy is English until the language strategy is confirmed.
 - Official PCNS brand assets are not yet available in the repository.
