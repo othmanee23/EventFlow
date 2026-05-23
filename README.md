@@ -41,6 +41,17 @@ npm run prisma:seed
 If `DATABASE_URL` is not set, the app uses mock data only when `EVENTFLOW_REQUIRE_DATABASE` is not enabled.
 Set `EVENTFLOW_REQUIRE_DATABASE=true` in staging/production to disable mock fallback entirely.
 
+## Supabase SSR Setup
+
+If you enable Supabase SSR utilities, define:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+```
+
+A sample server-rendered Supabase query page is available at `/supabase-todos`.
+
 For staging or production databases, run migrations with:
 
 ```bash
