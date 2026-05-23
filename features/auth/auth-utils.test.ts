@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getEventFlowLoginPassword, isLoginPasswordValid, validateLoginInput } from "./auth-utils";
+import { getEventFlowLoginPassword, getSafePostLoginPath, isLoginPasswordValid, validateLoginInput } from "./auth-utils";
 
 const ENV_KEY = "EVENTFLOW_LOGIN_PASSWORD";
 
@@ -42,5 +42,20 @@ describe("environment login password", () => {
     expect(getEventFlowLoginPassword()).toBe("password123");
     expect(isLoginPasswordValid("password123")).toBe(true);
     expect(isLoginPasswordValid("wrong-password")).toBe(false);
+  });
+});
+
+describe("safe post-login redirect path", () => {
+  it("keeps a valid internal path", () => {
+    expect(getSafePostLoginPath("/projects/project-1")).toBe("/projects/project-1");
+  });
+
+  it("falls back to dashboard for missing or unsafe paths", () => {
+    expect(getSafePostLoginPath(undefined)).toBe("/dashboard");
+    expect(getSafePostLoginPath(null)).toBe("/dashboard");
+    expect(getSafePostLoginPath("https://example.com")).toBe("/dashboard");
+    expect(getSafePostLoginPath("//example.com")).toBe("/dashboard");
+    expect(getSafePostLoginPath("/login")).toBe("/dashboard");
+    expect(getSafePostLoginPath("/login?next=%2Fprojects")).toBe("/dashboard");
   });
 });
