@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AUTH_SESSION_COOKIE, AUTH_SESSION_MAX_AGE_SECONDS } from "@/features/auth/auth-service";
-import { validateLoginInput } from "@/features/auth/auth-utils";
+import { isLoginPasswordValid, validateLoginInput } from "@/features/auth/auth-utils";
 import { getUserByEmail } from "@/features/users/user-service";
 import type { LoginCredentials, LoginResult } from "@/features/auth/auth-types";
 
@@ -15,6 +15,16 @@ export async function signInAction(credentials: LoginCredentials): Promise<Login
       success: false,
       message: "Check the highlighted fields and try again.",
       errors: validation.errors,
+    };
+  }
+
+  if (!isLoginPasswordValid(credentials.password)) {
+    return {
+      success: false,
+      message: "The login password is incorrect for this environment.",
+      errors: {
+        password: "Incorrect password.",
+      },
     };
   }
 

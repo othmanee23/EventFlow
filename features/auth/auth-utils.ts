@@ -1,6 +1,7 @@
 import type { LoginCredentials, LoginValidationResult } from "@/features/auth/auth-types";
 
 const PCNS_EMAIL_PATTERN = /^[^\s@]+@pcns\.org$/i;
+const DEFAULT_EVENTFLOW_LOGIN_PASSWORD = "password123";
 
 export function validateLoginInput(credentials: LoginCredentials): LoginValidationResult {
   const errors: LoginValidationResult["errors"] = {};
@@ -22,4 +23,13 @@ export function validateLoginInput(credentials: LoginCredentials): LoginValidati
     valid: Object.keys(errors).length === 0,
     errors,
   };
+}
+
+export function getEventFlowLoginPassword() {
+  const configuredPassword = process.env.EVENTFLOW_LOGIN_PASSWORD?.trim();
+  return configuredPassword && configuredPassword.length > 0 ? configuredPassword : DEFAULT_EVENTFLOW_LOGIN_PASSWORD;
+}
+
+export function isLoginPasswordValid(password: string) {
+  return password === getEventFlowLoginPassword();
 }

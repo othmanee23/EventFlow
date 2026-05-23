@@ -25,6 +25,7 @@ Set these variables in Vercel per environment:
 
 ```bash
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/eventflow?schema=public
+EVENTFLOW_LOGIN_PASSWORD=your-staging-or-production-password
 ```
 
 Use a separate PostgreSQL database for staging and production. Do not point staging and production at the same database.
@@ -67,4 +68,4 @@ After deployment, smoke test:
 
 ## Current Auth Note
 
-Authentication currently uses a cookie-backed internal session. Password verification is still mocked, so a real authentication provider or password strategy must be selected before production use.
+Authentication currently uses a cookie-backed internal session with an environment-defined shared password (`EVENTFLOW_LOGIN_PASSWORD`). This is still a temporary internal guard; select a real authentication provider or full credential strategy before production use.
