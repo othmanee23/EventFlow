@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getRequiredSession } from "@/features/auth/auth-service";
 import { mapDatabaseCommentToComment } from "@/features/projects/project-mappers";
 import { canUpdateAssignedTask } from "@/lib/permissions";
-import { getPrisma } from "@/lib/prisma";
+import { getPrisma, shouldUseMockFallback } from "@/lib/prisma";
 import { TaskStatus as DatabaseTaskStatus } from "@/prisma/generated/prisma/enums";
 import type { Comment } from "@/types/comment";
 import type { TaskStatus } from "@/types/task";
@@ -258,6 +258,15 @@ export async function addTaskCommentAction(
 }
 
 function createDatabaseNotConfiguredResult(): ActionFailure {
+  if (!shouldUseMockFallback()) {
+    return {
+      success: false,
+      persisted: false,
+      reason: "database_not_configured",
+      message: "Database access is required in this environment. Configure DATABASE_URL and try again.",
+    };
+  }
+
   return {
     success: false,
     persisted: false,

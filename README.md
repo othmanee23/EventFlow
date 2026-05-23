@@ -10,7 +10,7 @@ EventFlow is an internal event coordination platform for the Policy Center for t
 - Tailwind CSS
 - Component-based UI architecture
 - PostgreSQL with Prisma ORM
-- Mock fallback data until a database is configured and seeded
+- Mock fallback data for local development, with an opt-in strict database mode
 
 ## Getting Started
 
@@ -38,7 +38,8 @@ npm run prisma:migrate
 npm run prisma:seed
 ```
 
-If `DATABASE_URL` is not set, the app continues to use mock data for local development.
+If `DATABASE_URL` is not set, the app uses mock data only when `EVENTFLOW_REQUIRE_DATABASE` is not enabled.
+Set `EVENTFLOW_REQUIRE_DATABASE=true` in staging/production to disable mock fallback entirely.
 
 For staging or production databases, run migrations with:
 
@@ -74,7 +75,7 @@ npm run prisma:studio
 
 ## Current Assumptions
 
-- The app uses mock data until the staging PostgreSQL database is configured and seeded.
+- The app can run in mock-fallback mode locally, but staging/production should set `EVENTFLOW_REQUIRE_DATABASE=true`.
 - Authentication uses a cookie-backed internal session. Database users authenticate with per-user password hashes, and mock-only local mode still uses `EVENTFLOW_LOGIN_PASSWORD`.
 - UI copy is English until the language strategy is confirmed.
 - Official PCNS brand assets are not yet available in the repository.
