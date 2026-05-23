@@ -14,7 +14,11 @@ const initialCredentials: LoginCredentials = {
   password: "",
 };
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectTo: string;
+};
+
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter();
   const [credentials, setCredentials] = useState<LoginCredentials>(initialCredentials);
   const [errors, setErrors] = useState<LoginFieldErrors>({});
@@ -57,7 +61,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(redirectTo);
     router.refresh();
   }
 
