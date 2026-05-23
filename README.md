@@ -46,6 +46,10 @@ For staging or production databases, run migrations with:
 npm run prisma:deploy
 ```
 
+## Deployment
+
+See [docs/deployment.md](docs/deployment.md) for the Vercel staging strategy, environment variables, migration flow, and smoke checks.
+
 ## Scripts
 
 ```bash
