@@ -75,6 +75,6 @@ npm run prisma:studio
 ## Current Assumptions
 
 - The app uses mock data until the staging PostgreSQL database is configured and seeded.
-- Authentication uses a cookie-backed internal session and a shared environment password (`EVENTFLOW_LOGIN_PASSWORD`) as a temporary guard.
+- Authentication uses a cookie-backed internal session. Database users authenticate with per-user password hashes, and mock-only local mode still uses `EVENTFLOW_LOGIN_PASSWORD`.
 - UI copy is English until the language strategy is confirmed.
 - Official PCNS brand assets are not yet available in the repository.

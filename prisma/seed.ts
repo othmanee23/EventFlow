@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPasswordForStorage } from "../features/auth/password-hash";
 import { mockProjects, mockUsers } from "../lib/mock-data";
 import { PrismaClient } from "./generated/prisma/client";
 import {
@@ -18,6 +19,8 @@ import type {
 import type { UserRole as DomainUserRole } from "../types/user";
 
 const databaseUrl = process.env.DATABASE_URL;
+const seedUserPassword =
+  process.env.EVENTFLOW_SEED_USER_PASSWORD?.trim() || process.env.EVENTFLOW_LOGIN_PASSWORD?.trim() || "password123";
 
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to seed the database.");
@@ -72,6 +75,7 @@ async function main() {
       update: {
         name: user.name,
         email: user.email,
+        passwordHash: hashPasswordForStorage(seedUserPassword),
         role: USER_ROLE_TO_DATABASE[user.role],
         department: user.department,
         avatarUrl: user.avatarUrl ?? null,
@@ -80,6 +84,7 @@ async function main() {
         id: user.id,
         name: user.name,
         email: user.email,
+        passwordHash: hashPasswordForStorage(seedUserPassword),
         role: USER_ROLE_TO_DATABASE[user.role],
         department: user.department,
         avatarUrl: user.avatarUrl ?? null,

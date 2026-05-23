@@ -2,9 +2,10 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { verifyStoredPassword } from "@/features/auth/password-hash";
 import { AUTH_SESSION_COOKIE, AUTH_SESSION_MAX_AGE_SECONDS } from "@/features/auth/auth-service";
 import { isLoginPasswordValid, validateLoginInput } from "@/features/auth/auth-utils";
-import { getUserByEmail } from "@/features/users/user-service";
+import { getAuthUserByEmail, getUserByEmail } from "@/features/users/user-service";
 import type { LoginCredentials, LoginResult } from "@/features/auth/auth-types";
 
 export async function signInAction(credentials: LoginCredentials): Promise<LoginResult> {
@@ -18,7 +19,19 @@ export async function signInAction(credentials: LoginCredentials): Promise<Login
     };
   }
 
-  if (!isLoginPasswordValid(credentials.password)) {
+  const authUser = await getAuthUserByEmail(credentials.email);
+
+  if (authUser && !verifyStoredPassword(credentials.password, authUser.passwordHash)) {
+    return {
+      success: false,
+      message: "The password is incorrect.",
+      errors: {
+        password: "Incorrect password.",
+      },
+    };
+  }
+
+  if (!authUser && !isLoginPasswordValid(credentials.password)) {
     return {
       success: false,
       message: "The login password is incorrect for this environment.",
@@ -28,7 +41,7 @@ export async function signInAction(credentials: LoginCredentials): Promise<Login
     };
   }
 
-  const user = await getUserByEmail(credentials.email);
+  const user = authUser?.user ?? (await getUserByEmail(credentials.email));
 
   if (!user) {
     return {
