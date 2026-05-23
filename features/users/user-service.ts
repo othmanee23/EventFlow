@@ -1,13 +1,14 @@
 import { mockUsers } from "@/lib/mock-data";
-import { getPrisma } from "@/lib/prisma";
+import { getPrisma, shouldUseMockFallback } from "@/lib/prisma";
 import type { User } from "@/types/user";
 import { mapDatabaseUserToUser } from "@/features/users/user-mappers";
 
 export async function getUsers(): Promise<User[]> {
   const prisma = getPrisma();
+  const useMockFallback = shouldUseMockFallback();
 
   if (!prisma) {
-    return mockUsers;
+    return useMockFallback ? mockUsers : [];
   }
 
   try {
@@ -15,18 +16,19 @@ export async function getUsers(): Promise<User[]> {
       orderBy: [{ role: "asc" }, { name: "asc" }],
     });
 
-    return users.length > 0 ? users.map(mapDatabaseUserToUser) : mockUsers;
+    return users.length > 0 ? users.map(mapDatabaseUserToUser) : useMockFallback ? mockUsers : [];
   } catch (error) {
-    console.warn("Falling back to mock users because the database read failed.", error);
-    return mockUsers;
+    console.warn("User lookup failed.", error);
+    return useMockFallback ? mockUsers : [];
   }
 }
 
 export async function getUserById(userId: string): Promise<User | undefined> {
   const prisma = getPrisma();
+  const useMockFallback = shouldUseMockFallback();
 
   if (!prisma) {
-    return mockUsers.find((user) => user.id === userId);
+    return useMockFallback ? mockUsers.find((user) => user.id === userId) : undefined;
   }
 
   try {
@@ -36,19 +38,24 @@ export async function getUserById(userId: string): Promise<User | undefined> {
       },
     });
 
-    return user ? mapDatabaseUserToUser(user) : mockUsers.find((mockUser) => mockUser.id === userId);
+    if (user) {
+      return mapDatabaseUserToUser(user);
+    }
+
+    return useMockFallback ? mockUsers.find((mockUser) => mockUser.id === userId) : undefined;
   } catch (error) {
-    console.warn("Falling back to mock user lookup because the database read failed.", error);
-    return mockUsers.find((user) => user.id === userId);
+    console.warn("User by id lookup failed.", error);
+    return useMockFallback ? mockUsers.find((user) => user.id === userId) : undefined;
   }
 }
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   const normalizedEmail = email.trim().toLowerCase();
   const prisma = getPrisma();
+  const useMockFallback = shouldUseMockFallback();
 
   if (!prisma) {
-    return mockUsers.find((user) => user.email.toLowerCase() === normalizedEmail);
+    return useMockFallback ? mockUsers.find((user) => user.email.toLowerCase() === normalizedEmail) : undefined;
   }
 
   try {
@@ -58,12 +65,14 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
       },
     });
 
-    return user
-      ? mapDatabaseUserToUser(user)
-      : mockUsers.find((mockUser) => mockUser.email.toLowerCase() === normalizedEmail);
+    if (user) {
+      return mapDatabaseUserToUser(user);
+    }
+
+    return useMockFallback ? mockUsers.find((mockUser) => mockUser.email.toLowerCase() === normalizedEmail) : undefined;
   } catch (error) {
-    console.warn("Falling back to mock user email lookup because the database read failed.", error);
-    return mockUsers.find((user) => user.email.toLowerCase() === normalizedEmail);
+    console.warn("User by email lookup failed.", error);
+    return useMockFallback ? mockUsers.find((user) => user.email.toLowerCase() === normalizedEmail) : undefined;
   }
 }
 
