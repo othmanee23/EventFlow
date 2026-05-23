@@ -39,7 +39,11 @@ export async function createClient(request: NextRequest) {
   });
 
   // Required to refresh expired auth tokens and persist refreshed cookies.
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch (error) {
+    console.warn("Supabase auth refresh failed in proxy middleware.", error);
+  }
 
   return supabaseResponse;
 }
