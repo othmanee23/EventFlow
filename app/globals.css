@@ -33,8 +33,11 @@ body {
 }
 
 a {
-  color: inherit;
   text-decoration: none;
+}
+
+a:not([class]) {
+  color: inherit;
 }
 
 button,
@@ -48,4 +51,3 @@ select {
   background: #bfdbfe;
   color: #0a1e3a;
 }
-

@@ -1,4 +1,5 @@
 import { Bell, LogOut, Search } from "lucide-react";
+import { NavigationLinks } from "@/components/layout/navigation-links";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { signOutAction } from "@/features/auth/auth-actions";
@@ -47,6 +48,9 @@ export function Header({ title, user }: HeaderProps) {
             </button>
           </form>
         </div>
+      </div>
+      <div className="border-t border-white/10 bg-brand-navy px-4 py-3 lg:hidden">
+        <NavigationLinks variant="horizontal" />
       </div>
     </header>
   );
