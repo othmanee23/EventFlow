@@ -1,0 +1,21 @@
+name: Main Branch Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  enforce-main-source:
+    name: Enforce develop -> main only
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate source branch
+        run: |
+          echo "PR base branch: ${{ github.base_ref }}"
+          echo "PR head branch: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "Only PRs from 'develop' can target 'main'."
+            exit 1
+          fi
