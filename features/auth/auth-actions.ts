@@ -6,6 +6,7 @@ import { verifyStoredPassword } from "@/features/auth/password-hash";
 import { AUTH_SESSION_COOKIE, AUTH_SESSION_MAX_AGE_SECONDS } from "@/features/auth/auth-service";
 import { isLoginPasswordValid, validateLoginInput } from "@/features/auth/auth-utils";
 import { getAuthUserByEmail, getUserByEmail } from "@/features/users/user-service";
+import { shouldUseMockFallback } from "@/lib/prisma";
 import type { LoginCredentials, LoginResult } from "@/features/auth/auth-types";
 
 export async function signInAction(credentials: LoginCredentials): Promise<LoginResult> {
@@ -19,7 +20,18 @@ export async function signInAction(credentials: LoginCredentials): Promise<Login
     };
   }
 
+  const useMockFallback = shouldUseMockFallback();
   const authUser = await getAuthUserByEmail(credentials.email);
+
+  if (!useMockFallback && !authUser) {
+    return {
+      success: false,
+      message: "No active EventFlow database user was found for this PCNS email.",
+      errors: {
+        email: "Use a provisioned EventFlow user email.",
+      },
+    };
+  }
 
   if (authUser && !verifyStoredPassword(credentials.password, authUser.passwordHash)) {
     return {
@@ -31,7 +43,7 @@ export async function signInAction(credentials: LoginCredentials): Promise<Login
     };
   }
 
-  if (!authUser && !isLoginPasswordValid(credentials.password)) {
+  if (useMockFallback && !authUser && !isLoginPasswordValid(credentials.password)) {
     return {
       success: false,
       message: "The login password is incorrect for this environment.",
@@ -41,7 +53,7 @@ export async function signInAction(credentials: LoginCredentials): Promise<Login
     };
   }
 
-  const user = authUser?.user ?? (await getUserByEmail(credentials.email));
+  const user = authUser?.user ?? (useMockFallback ? await getUserByEmail(credentials.email) : undefined);
 
   if (!user) {
     return {

@@ -1,6 +1,6 @@
 import { mapDatabaseProjectToProject } from "@/features/projects/project-mappers";
 import { mockProjects } from "@/lib/mock-data";
-import { getPrisma } from "@/lib/prisma";
+import { getPrisma, shouldUseMockFallback } from "@/lib/prisma";
 import type { Project } from "@/types/project";
 
 export const projectInclude = {
@@ -35,9 +35,10 @@ export const projectInclude = {
 
 export async function getProjects(): Promise<Project[]> {
   const prisma = getPrisma();
+  const useMockFallback = shouldUseMockFallback();
 
   if (!prisma) {
-    return mockProjects;
+    return useMockFallback ? mockProjects : [];
   }
 
   try {
@@ -48,18 +49,19 @@ export async function getProjects(): Promise<Project[]> {
       },
     });
 
-    return projects.length > 0 ? projects.map(mapDatabaseProjectToProject) : mockProjects;
+    return projects.length > 0 ? projects.map(mapDatabaseProjectToProject) : useMockFallback ? mockProjects : [];
   } catch (error) {
-    console.warn("Falling back to mock projects because the database read failed.", error);
-    return mockProjects;
+    console.warn("Project list lookup failed.", error);
+    return useMockFallback ? mockProjects : [];
   }
 }
 
 export async function getProjectById(projectId: string): Promise<Project | undefined> {
   const prisma = getPrisma();
+  const useMockFallback = shouldUseMockFallback();
 
   if (!prisma) {
-    return mockProjects.find((project) => project.id === projectId);
+    return useMockFallback ? mockProjects.find((project) => project.id === projectId) : undefined;
   }
 
   try {
@@ -70,12 +72,14 @@ export async function getProjectById(projectId: string): Promise<Project | undef
       include: projectInclude,
     });
 
-    return project
-      ? mapDatabaseProjectToProject(project)
-      : mockProjects.find((mockProject) => mockProject.id === projectId);
+    if (project) {
+      return mapDatabaseProjectToProject(project);
+    }
+
+    return useMockFallback ? mockProjects.find((mockProject) => mockProject.id === projectId) : undefined;
   } catch (error) {
-    console.warn("Falling back to mock project lookup because the database read failed.", error);
-    return mockProjects.find((project) => project.id === projectId);
+    console.warn("Project by id lookup failed.", error);
+    return useMockFallback ? mockProjects.find((project) => project.id === projectId) : undefined;
   }
 }
 

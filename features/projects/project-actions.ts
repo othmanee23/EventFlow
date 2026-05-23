@@ -13,7 +13,7 @@ import {
 import { getRequiredSession } from "@/features/auth/auth-service";
 import { DEFAULT_TASK_CATEGORIES, TASK_CATEGORIES } from "@/lib/constants";
 import { canCreateProject } from "@/lib/permissions";
-import { getPrisma } from "@/lib/prisma";
+import { getPrisma, shouldUseMockFallback } from "@/lib/prisma";
 import { TaskCategory, TaskPriority, TaskStatus } from "@/prisma/generated/prisma/enums";
 import type { Project } from "@/types/project";
 import type { TaskCategory as DomainTaskCategory } from "@/types/task";
@@ -71,11 +71,15 @@ export async function createProjectAction(input: CreateProjectInput): Promise<Cr
   const prisma = getPrisma();
 
   if (!prisma) {
+    const databaseMessage = shouldUseMockFallback()
+      ? "No database is configured, so the project was created locally for this session."
+      : "Database access is required in this environment. Configure DATABASE_URL and try again.";
+
     return {
       success: false,
       persisted: false,
       reason: "database_not_configured",
-      message: "No database is configured, so the project was created locally for this session.",
+      message: databaseMessage,
     };
   }
 
