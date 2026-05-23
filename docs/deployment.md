@@ -9,6 +9,7 @@ EventFlow uses Vercel for hosted environments and GitHub pull requests for revie
 - Feature branches should only create preview deployments for review.
 - Pull requests should target `develop`.
 - Release work from `develop` to `main` only after the staged version has been reviewed.
+- A CI guard blocks PRs into `main` unless the source branch is `develop`.
 
 Recommended Vercel setup:
 
