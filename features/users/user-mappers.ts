@@ -6,6 +6,7 @@ export type DatabaseUser = {
   email: string;
   id: string;
   name: string;
+  passwordHash?: string;
   role: string;
 };
 

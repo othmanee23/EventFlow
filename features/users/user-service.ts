@@ -70,3 +70,39 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 export function getMockUsers(): User[] {
   return mockUsers;
 }
+
+export async function getAuthUserByEmail(email: string): Promise<{ passwordHash: string; user: User } | undefined> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const prisma = getPrisma();
+
+  if (!prisma) {
+    return undefined;
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: normalizedEmail,
+      },
+      select: {
+        avatarUrl: true,
+        department: true,
+        email: true,
+        id: true,
+        name: true,
+        passwordHash: true,
+        role: true,
+      },
+    });
+
+    return user
+      ? {
+          user: mapDatabaseUserToUser(user),
+          passwordHash: user.passwordHash,
+        }
+      : undefined;
+  } catch (error) {
+    console.warn("Database auth user lookup failed.", error);
+    return undefined;
+  }
+}
