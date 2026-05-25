@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeCreateUserInput, validateCreateUserInput } from "./user-utils";
+import { normalizeCreateUserInput, validateCreateUserInput, validateUpdateUserRoleInput } from "./user-utils";
 
 describe("normalizeCreateUserInput", () => {
   it("trims and normalizes email casing", () => {
@@ -45,5 +45,25 @@ describe("validateCreateUserInput", () => {
 
     expect(errors.email).toBe("Use a valid PCNS email address.");
     expect(errors.temporaryPassword).toBe("Temporary password must be at least 8 characters.");
+  });
+});
+
+describe("validateUpdateUserRoleInput", () => {
+  it("accepts valid user id and role", () => {
+    const errors = validateUpdateUserRoleInput({
+      userId: "user-123",
+      role: "admin",
+    });
+
+    expect(errors).toEqual({});
+  });
+
+  it("rejects empty user id", () => {
+    const errors = validateUpdateUserRoleInput({
+      userId: "   ",
+      role: "member",
+    });
+
+    expect(errors.userId).toBe("User is required.");
   });
 });
