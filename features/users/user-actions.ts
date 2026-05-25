@@ -6,12 +6,16 @@ import { hashPasswordForStorage } from "@/features/auth/password-hash";
 import { mapDatabaseUserToUser } from "@/features/users/user-mappers";
 import {
   hasCreateUserErrors,
+  hasUpdateUserRoleErrors,
   normalizeCreateUserInput,
+  validateUpdateUserRoleInput,
   validateCreateUserInput,
   type CreateUserErrors,
   type CreateUserInput,
+  type UpdateUserRoleErrors,
+  type UpdateUserRoleInput,
 } from "@/features/users/user-utils";
-import { canManageUsers } from "@/lib/permissions";
+import { canManageUserRole, canManageUsers } from "@/lib/permissions";
 import { getPrisma } from "@/lib/prisma";
 import { UserRole as DatabaseUserRole } from "@/prisma/generated/prisma/enums";
 import type { User } from "@/types/user";
@@ -30,6 +34,23 @@ type CreateUserActionResult =
       message: string;
       persisted: false;
       reason: "database_not_configured" | "invalid_input" | "already_exists" | "forbidden" | "database_error";
+      success: false;
+      user?: never;
+    };
+
+type UpdateUserRoleActionResult =
+  | {
+      errors?: never;
+      message?: string;
+      persisted: true;
+      success: true;
+      user: User;
+    }
+  | {
+      errors?: UpdateUserRoleErrors;
+      message: string;
+      persisted: false;
+      reason: "database_not_configured" | "invalid_input" | "not_found" | "forbidden" | "database_error";
       success: false;
       user?: never;
     };
@@ -123,6 +144,103 @@ export async function createUserAction(input: CreateUserInput): Promise<CreateUs
       persisted: false,
       reason: "database_error",
       message: "User invitation failed. Check the database configuration and try again.",
+    };
+  }
+}
+
+export async function updateUserRoleAction(input: UpdateUserRoleInput): Promise<UpdateUserRoleActionResult> {
+  const errors = validateUpdateUserRoleInput(input);
+
+  if (hasUpdateUserRoleErrors(errors)) {
+    return {
+      success: false,
+      persisted: false,
+      reason: "invalid_input",
+      message: "Check the highlighted fields and try again.",
+      errors,
+    };
+  }
+
+  const session = await getRequiredSession();
+
+  if (!canManageUsers(session.user.role)) {
+    return {
+      success: false,
+      persisted: false,
+      reason: "forbidden",
+      message: "You do not have permission to manage users.",
+    };
+  }
+
+  const prisma = getPrisma();
+
+  if (!prisma) {
+    return {
+      success: false,
+      persisted: false,
+      reason: "database_not_configured",
+      message: "Database access is required to update user roles.",
+    };
+  }
+
+  try {
+    const targetUser = await prisma.user.findUnique({
+      where: {
+        id: input.userId,
+      },
+    });
+
+    if (!targetUser) {
+      return {
+        success: false,
+        persisted: false,
+        reason: "not_found",
+        message: "User was not found in the database.",
+      };
+    }
+
+    if (
+      !canManageUserRole(session.user, {
+        id: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        role: mapDatabaseUserToUser(targetUser).role,
+        department: targetUser.department,
+        avatarUrl: targetUser.avatarUrl ?? undefined,
+      })
+    ) {
+      return {
+        success: false,
+        persisted: false,
+        reason: "forbidden",
+        message: "You do not have permission to manage this user role.",
+      };
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: input.userId,
+      },
+      data: {
+        role: USER_ROLE_TO_DATABASE[input.role],
+      },
+    });
+
+    revalidatePath("/users");
+
+    return {
+      success: true,
+      persisted: true,
+      user: mapDatabaseUserToUser(updatedUser),
+    };
+  } catch (error) {
+    console.error("User role update failed.", error);
+
+    return {
+      success: false,
+      persisted: false,
+      reason: "database_error",
+      message: "User role update failed. Check the database configuration and try again.",
     };
   }
 }

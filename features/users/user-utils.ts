@@ -12,6 +12,11 @@ export type CreateUserInput = {
 };
 
 export type CreateUserErrors = Partial<Record<"department" | "email" | "name" | "role" | "temporaryPassword", string>>;
+export type UpdateUserRoleInput = {
+  role: UserRole;
+  userId: string;
+};
+export type UpdateUserRoleErrors = Partial<Record<"role" | "userId", string>>;
 
 export function normalizeCreateUserInput(input: CreateUserInput): CreateUserInput {
   return {
@@ -54,5 +59,23 @@ export function validateCreateUserInput(input: CreateUserInput): CreateUserError
 }
 
 export function hasCreateUserErrors(errors: CreateUserErrors) {
+  return Object.keys(errors).length > 0;
+}
+
+export function validateUpdateUserRoleInput(input: UpdateUserRoleInput): UpdateUserRoleErrors {
+  const errors: UpdateUserRoleErrors = {};
+
+  if (!input.userId.trim()) {
+    errors.userId = "User is required.";
+  }
+
+  if (!VALID_USER_ROLES.includes(input.role)) {
+    errors.role = "Select a valid role.";
+  }
+
+  return errors;
+}
+
+export function hasUpdateUserRoleErrors(errors: UpdateUserRoleErrors) {
   return Object.keys(errors).length > 0;
 }
