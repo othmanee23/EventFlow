@@ -8,8 +8,8 @@ import {
   hasCreateUserErrors,
   hasUpdateUserRoleErrors,
   normalizeCreateUserInput,
-  validateUpdateUserRoleInput,
   validateCreateUserInput,
+  validateUpdateUserRoleInput,
   type CreateUserErrors,
   type CreateUserInput,
   type UpdateUserRoleErrors,
@@ -18,8 +18,7 @@ import {
 import { canManageUserRole, canManageUsers } from "@/lib/permissions";
 import { getPrisma } from "@/lib/prisma";
 import { UserRole as DatabaseUserRole } from "@/prisma/generated/prisma/enums";
-import type { User } from "@/types/user";
-import type { UserRole } from "@/types/user";
+import type { User, UserRole } from "@/types/user";
 
 type CreateUserActionResult =
   | {
@@ -199,16 +198,7 @@ export async function updateUserRoleAction(input: UpdateUserRoleInput): Promise<
       };
     }
 
-    if (
-      !canManageUserRole(session.user, {
-        id: targetUser.id,
-        name: targetUser.name,
-        email: targetUser.email,
-        role: mapDatabaseUserToUser(targetUser).role,
-        department: targetUser.department,
-        avatarUrl: targetUser.avatarUrl ?? undefined,
-      })
-    ) {
+    if (!canManageUserRole(session.user, mapDatabaseUserToUser(targetUser))) {
       return {
         success: false,
         persisted: false,
@@ -217,12 +207,34 @@ export async function updateUserRoleAction(input: UpdateUserRoleInput): Promise<
       };
     }
 
-    const updatedUser = await prisma.user.update({
+    const nextRole = USER_ROLE_TO_DATABASE[input.role];
+
+    if (targetUser.role === DatabaseUserRole.ADMIN && nextRole !== DatabaseUserRole.ADMIN) {
+      const adminCount = await prisma.user.count({
+        where: {
+          role: DatabaseUserRole.ADMIN,
+        },
+      });
+
+      if (adminCount <= 1) {
+        return {
+          success: false,
+          persisted: false,
+          reason: "invalid_input",
+          message: "At least one Admin must remain in EventFlow.",
+          errors: {
+            role: "At least one Admin must remain in EventFlow.",
+          },
+        };
+      }
+    }
+
+    const user = await prisma.user.update({
       where: {
         id: input.userId,
       },
       data: {
-        role: USER_ROLE_TO_DATABASE[input.role],
+        role: nextRole,
       },
     });
 
@@ -231,7 +243,7 @@ export async function updateUserRoleAction(input: UpdateUserRoleInput): Promise<
     return {
       success: true,
       persisted: true,
-      user: mapDatabaseUserToUser(updatedUser),
+      user: mapDatabaseUserToUser(user),
     };
   } catch (error) {
     console.error("User role update failed.", error);

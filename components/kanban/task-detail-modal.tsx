@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/utils";
 import type { Task } from "@/types/task";
 
 type TaskDetailModalProps = {
+  onChecklistAdd: (taskId: string, label: string) => Promise<boolean>;
   onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
   onCommentAdd: (taskId: string, body: string) => Promise<boolean>;
   onClose: () => void;
@@ -19,13 +20,21 @@ type TaskDetailModalProps = {
   task?: Task;
 };
 
-export function TaskDetailModal({ onChecklistToggle, onClose, onCommentAdd, open, task }: TaskDetailModalProps) {
+export function TaskDetailModal({
+  onChecklistAdd,
+  onChecklistToggle,
+  onClose,
+  onCommentAdd,
+  open,
+  task,
+}: TaskDetailModalProps) {
   if (!task) {
     return null;
   }
 
   return (
     <TaskDetailModalContent
+      onChecklistAdd={onChecklistAdd}
       key={task.id}
       onChecklistToggle={onChecklistToggle}
       onClose={onClose}
@@ -37,6 +46,7 @@ export function TaskDetailModal({ onChecklistToggle, onClose, onCommentAdd, open
 }
 
 type TaskDetailModalContentProps = {
+  onChecklistAdd: (taskId: string, label: string) => Promise<boolean>;
   onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
   onClose: () => void;
   onCommentAdd: (taskId: string, body: string) => Promise<boolean>;
@@ -45,16 +55,46 @@ type TaskDetailModalContentProps = {
 };
 
 function TaskDetailModalContent({
+  onChecklistAdd,
   onChecklistToggle,
   onClose,
   onCommentAdd,
   open,
   task,
 }: TaskDetailModalContentProps) {
+  const [checklistLabel, setChecklistLabel] = useState("");
+  const [checklistError, setChecklistError] = useState("");
+  const [checklistSubmitting, setChecklistSubmitting] = useState(false);
   const [commentBody, setCommentBody] = useState("");
   const [commentError, setCommentError] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const checklistProgress = getChecklistProgress(task.checklist);
+
+  async function handleChecklistSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedLabel = checklistLabel.trim();
+
+    if (!trimmedLabel) {
+      setChecklistError("Checklist item cannot be empty.");
+      return;
+    }
+
+    setChecklistSubmitting(true);
+
+    try {
+      const added = await onChecklistAdd(task.id, trimmedLabel);
+
+      if (added) {
+        setChecklistLabel("");
+        setChecklistError("");
+      } else {
+        setChecklistError("Checklist item could not be saved.");
+      }
+    } finally {
+      setChecklistSubmitting(false);
+    }
+  }
 
   async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,6 +177,27 @@ function TaskDetailModalContent({
                 onToggle={(item, completed) => onChecklistToggle(task.id, item.id, completed)}
               />
             </div>
+            <form className="mt-4 grid gap-3" onSubmit={handleChecklistSubmit}>
+              <label className="grid gap-2 text-sm font-medium text-slate-700" htmlFor="task-checklist-item">
+                Add checklist item
+                <input
+                  className="h-11 rounded-md border border-border-soft bg-white px-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-blue focus:ring-4 focus:ring-blue-100"
+                  id="task-checklist-item"
+                  onChange={(event) => {
+                    setChecklistLabel(event.target.value);
+                    setChecklistError("");
+                  }}
+                  placeholder="Enter checklist item"
+                  value={checklistLabel}
+                />
+              </label>
+              {checklistError ? <p className="text-xs font-medium text-red-600">{checklistError}</p> : null}
+              <div className="flex justify-end">
+                <Button disabled={checklistSubmitting} type="submit">
+                  {checklistSubmitting ? "Adding..." : "Add item"}
+                </Button>
+              </div>
+            </form>
           </section>
           <section className="rounded-md border border-border-soft p-4">
             <h3 className="text-sm font-semibold text-slate-950">Comments</h3>
