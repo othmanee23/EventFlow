@@ -14,7 +14,12 @@ import { useMemo, useState } from "react";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 import { TaskCard } from "@/components/kanban/task-card";
 import { TaskDetailModal } from "@/components/kanban/task-detail-modal";
-import { addTaskCommentAction, toggleChecklistItemAction, updateTaskStatusAction } from "@/features/tasks/task-actions";
+import {
+  addChecklistItemAction,
+  addTaskCommentAction,
+  toggleChecklistItemAction,
+  updateTaskStatusAction,
+} from "@/features/tasks/task-actions";
 import { TASK_STATUS_ORDER, TASK_STATUSES } from "@/lib/constants";
 import { getTasksByStatus } from "@/features/tasks/task-service";
 import type { Comment } from "@/types/comment";
@@ -145,6 +150,40 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
     return true;
   }
 
+  async function handleChecklistAdd(taskId: string, label: string) {
+    const createdAt = new Date().toISOString();
+    const trimmedLabel = label.trim();
+    const result = await addChecklistItemAction(taskId, trimmedLabel);
+
+    if (!result.success && !shouldUseLocalFallback(result.reason)) {
+      setBoardError(result.message);
+      return false;
+    }
+
+    const item = result.success
+      ? result.item
+      : {
+          id: `checklist-${taskId}-${createdAt}`,
+          taskId,
+          label: trimmedLabel,
+          completed: false,
+        };
+
+    setBoardTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              checklist: [...task.checklist, item],
+              updatedAt: result.success ? result.updatedAt : createdAt,
+            }
+          : task,
+      ),
+    );
+    setBoardError("");
+    return true;
+  }
+
   async function persistTaskStatus(taskId: string, status: TaskStatus) {
     const result = await updateTaskStatusAction(taskId, status);
 
@@ -221,6 +260,7 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
       </section>
       <DragOverlay>{activeTask ? <TaskCard task={activeTask} /> : null}</DragOverlay>
       <TaskDetailModal
+        onChecklistAdd={handleChecklistAdd}
         onCommentAdd={handleCommentAdd}
         onChecklistToggle={handleChecklistToggle}
         onClose={() => setSelectedTaskId(null)}

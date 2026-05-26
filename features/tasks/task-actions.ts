@@ -6,6 +6,7 @@ import { mapDatabaseCommentToComment } from "@/features/projects/project-mappers
 import { canUpdateAssignedTask } from "@/lib/permissions";
 import { getPrisma, shouldUseMockFallback } from "@/lib/prisma";
 import { TaskStatus as DatabaseTaskStatus } from "@/prisma/generated/prisma/enums";
+import type { ChecklistItem } from "@/types/checklist";
 import type { Comment } from "@/types/comment";
 import type { TaskStatus } from "@/types/task";
 
@@ -38,6 +39,15 @@ type ToggleChecklistItemResult =
 type AddTaskCommentResult =
   | {
       comment: Comment;
+      persisted: true;
+      success: true;
+      updatedAt: string;
+    }
+  | ActionFailure;
+
+type AddChecklistItemResult =
+  | {
+      item: ChecklistItem;
       persisted: true;
       success: true;
       updatedAt: string;
@@ -254,6 +264,97 @@ export async function addTaskCommentAction(
   } catch (error) {
     console.error("Task comment creation failed.", error);
     return createDatabaseErrorResult("Comment could not be saved.");
+  }
+}
+
+export async function addChecklistItemAction(
+  taskId: string,
+  label: string,
+): Promise<AddChecklistItemResult> {
+  const session = await getRequiredSession();
+  const trimmedLabel = label.trim();
+
+  if (!trimmedLabel) {
+    return {
+      success: false,
+      persisted: false,
+      reason: "invalid_input",
+      message: "Checklist item cannot be empty.",
+    };
+  }
+
+  const prisma = getPrisma();
+
+  if (!prisma) {
+    return createDatabaseNotConfiguredResult();
+  }
+
+  try {
+    const task = await prisma.task.findUnique({
+      where: {
+        id: taskId,
+      },
+      select: {
+        assigneeId: true,
+        project: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+    });
+
+    if (!task) {
+      return createNotFoundResult("Task was not found in the database.");
+    }
+
+    if (!canUpdateAssignedTask(session.user, task.assigneeId)) {
+      return createForbiddenResult("You do not have permission to add checklist items to this task.");
+    }
+
+    const item = await prisma.checklistItem.create({
+      data: {
+        taskId,
+        label: trimmedLabel,
+        completed: false,
+      },
+      select: {
+        id: true,
+        taskId: true,
+        label: true,
+        completed: true,
+        completedAt: true,
+      },
+    });
+    const updatedTask = await prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        updatedAt: new Date(),
+      },
+      select: {
+        updatedAt: true,
+      },
+    });
+
+    revalidateTaskPaths(task.project.slug);
+
+    return {
+      success: true,
+      persisted: true,
+      item: {
+        id: item.id,
+        taskId: item.taskId,
+        label: item.label,
+        completed: item.completed,
+        completedAt: item.completedAt?.toISOString(),
+      },
+      updatedAt: updatedTask.updatedAt.toISOString(),
+    };
+  } catch (error) {
+    console.error("Checklist item creation failed.", error);
+    return createDatabaseErrorResult("Checklist item could not be saved.");
   }
 }
 
