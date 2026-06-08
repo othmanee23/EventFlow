@@ -5,13 +5,14 @@ import type { User } from "@/types/user";
 
 export type CreateProjectInput = {
   description: string;
-  eventDate: string;
+  endDate: string;
   leaderId: string;
   memberIds: string[];
   name: string;
+  startDate: string;
 };
 
-export type CreateProjectErrors = Partial<Record<"eventDate" | "leaderId" | "name", string>>;
+export type CreateProjectErrors = Partial<Record<"endDate" | "leaderId" | "name" | "startDate", string>>;
 
 export function validateCreateProjectInput(input: CreateProjectInput): CreateProjectErrors {
   const errors: CreateProjectErrors = {};
@@ -20,8 +21,16 @@ export function validateCreateProjectInput(input: CreateProjectInput): CreatePro
     errors.name = "Project name is required.";
   }
 
-  if (!input.eventDate) {
-    errors.eventDate = "Event date is required.";
+  if (!input.startDate) {
+    errors.startDate = "Start date is required.";
+  }
+
+  if (!input.endDate) {
+    errors.endDate = "End date is required.";
+  }
+
+  if (input.startDate && input.endDate && input.endDate < input.startDate) {
+    errors.endDate = "End date must be on or after the start date.";
   }
 
   if (!input.leaderId) {
@@ -44,23 +53,53 @@ export function getProjectProgress(project: Project) {
   return Math.round((completedTasks / project.tasks.length) * 100);
 }
 
+export function deriveProjectStatus(project: Pick<Project, "startDate" | "endDate" | "tasks">): Project["status"] {
+  if (project.tasks.length > 0 && project.tasks.every((task) => task.status === "done")) {
+    return "completed";
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startDate = new Date(project.startDate);
+  startDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(project.endDate);
+  endDate.setHours(0, 0, 0, 0);
+
+  if (endDate < today) {
+    return "completed";
+  }
+
+  if (startDate > today) {
+    return "planning";
+  }
+
+  return "active";
+}
+
 export function createProjectFromInput(input: CreateProjectInput, users: User[]): Project {
   const now = new Date().toISOString();
   const projectId = slugify(input.name);
   const leader = users.find((user) => user.id === input.leaderId) ?? users[0];
   const members = users.filter((user) => input.memberIds.includes(user.id) && user.id !== leader.id);
+  const tasks = createDefaultTasks(projectId, input.endDate, leader, now);
 
-  return {
+  const project: Project = {
     id: projectId,
     name: input.name.trim(),
     description: input.description.trim(),
     status: "planning",
-    eventDate: input.eventDate,
+    startDate: input.startDate,
+    endDate: input.endDate,
     leader,
     members,
-    tasks: createDefaultTasks(projectId, input.eventDate, leader, now),
+    tasks,
     createdAt: now,
     updatedAt: now,
+  };
+
+  return {
+    ...project,
+    status: deriveProjectStatus(project),
   };
 }
 
@@ -74,7 +113,7 @@ function createDefaultTasks(projectId: string, dueDate: string, assignee: User, 
     status: "todo",
     priority: "medium",
     dueDate,
-    assignee,
+    assignees: [assignee],
     checklist: [],
     comments: [],
     createdAt: now,

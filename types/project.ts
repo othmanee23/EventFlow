@@ -8,11 +8,11 @@ export type Project = {
   name: string;
   description: string;
   status: ProjectStatus;
-  eventDate: string;
+  startDate: string;
+  endDate: string;
   leader: User;
   members: User[];
   tasks: Task[];
   createdAt: string;
   updatedAt: string;
 };
-

@@ -12,8 +12,8 @@ export const ROLES: Record<UserRole, string> = {
 
 export const PROJECT_STATUSES: Record<ProjectStatus, string> = {
   planning: "Planning",
-  active: "Active",
-  completed: "Completed",
+  active: "In Progress",
+  completed: "Finished",
   on_hold: "On hold",
 };
 
@@ -42,4 +42,3 @@ export const DEFAULT_TASK_CATEGORIES: TaskCategory[] = [
   "audiovisual_production",
   "post_event",
 ];
-

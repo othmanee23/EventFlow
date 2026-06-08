@@ -37,7 +37,7 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
                     </div>
                     <h3 className="text-sm font-semibold text-slate-950">{deadline.title}</h3>
                     <p className="mt-1 text-sm text-slate-500">
-                      {deadline.projectName} · {deadline.assigneeName}
+                      {deadline.projectName} · {deadline.assigneeNames}
                     </p>
                   </div>
                   <Link
@@ -58,4 +58,3 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
     </section>
   );
 }
-

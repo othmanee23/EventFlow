@@ -26,7 +26,8 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
   const leaders = useMemo(() => users.filter((user) => user.role === "admin" || user.role === "leader"), [users]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [eventDate, setEventDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [leaderId, setLeaderId] = useState(leaders[0]?.id ?? "");
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<CreateProjectErrors>({});
@@ -39,7 +40,8 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
     const input: CreateProjectInput = {
       name,
       description,
-      eventDate,
+      startDate,
+      endDate,
       leaderId,
       memberIds,
     };
@@ -85,7 +87,8 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
   function resetForm() {
     setName("");
     setDescription("");
-    setEventDate("");
+    setStartDate("");
+    setEndDate("");
     setLeaderId(leaders[0]?.id ?? "");
     setMemberIds([]);
     setErrors({});
@@ -128,15 +131,26 @@ export function CreateProjectModal({ onClose, onCreate, open, users }: CreatePro
           />
         </label>
         <Input
-          error={errors.eventDate}
-          label="Event date"
-          name="event-date"
+          error={errors.startDate}
+          label="Start date"
+          name="project-start-date"
           onChange={(event) => {
-            setEventDate(event.target.value);
-            setErrors((currentErrors) => ({ ...currentErrors, eventDate: undefined }));
+            setStartDate(event.target.value);
+            setErrors((currentErrors) => ({ ...currentErrors, startDate: undefined }));
           }}
           type="date"
-          value={eventDate}
+          value={startDate}
+        />
+        <Input
+          error={errors.endDate}
+          label="End date"
+          name="project-end-date"
+          onChange={(event) => {
+            setEndDate(event.target.value);
+            setErrors((currentErrors) => ({ ...currentErrors, endDate: undefined }));
+          }}
+          type="date"
+          value={endDate}
         />
         <label className="grid gap-2 text-sm font-medium text-slate-700" htmlFor="project-leader">
           Leader

@@ -56,7 +56,7 @@ function createTask(id: string, status: TaskStatus): Task {
     status,
     priority: "medium",
     dueDate: "2026-06-01",
-    assignee,
+    assignees: [assignee],
     checklist: [],
     comments: [],
     createdAt: "2026-05-01T00:00:00.000Z",

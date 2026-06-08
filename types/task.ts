@@ -23,10 +23,9 @@ export type Task = {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string;
-  assignee: User;
+  assignees: User[];
   checklist: ChecklistItem[];
   comments: Comment[];
   createdAt: string;
   updatedAt: string;
 };
-

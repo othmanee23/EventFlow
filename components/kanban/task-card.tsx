@@ -29,6 +29,7 @@ export function TaskCard({ task }: TaskCardProps) {
           <CheckSquare aria-hidden="true" className="h-4 w-4" />
           Checklist {checklistProgress}%
         </span>
+        <span className="line-clamp-1">Assigned to {task.assignees.map((assignee) => assignee.name).join(", ")}</span>
         <span className="flex items-center gap-2">
           <MessageSquare aria-hidden="true" className="h-4 w-4" />
           {task.comments.length} comments
@@ -37,4 +38,3 @@ export function TaskCard({ task }: TaskCardProps) {
     </article>
   );
 }
-

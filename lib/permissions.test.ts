@@ -34,13 +34,13 @@ describe("role permissions", () => {
 
 describe("task update permissions", () => {
   it("allows admins and leaders to update any assigned task", () => {
-    expect(canUpdateAssignedTask(admin, assignedMember.id)).toBe(true);
-    expect(canUpdateAssignedTask(leader, assignedMember.id)).toBe(true);
+    expect(canUpdateAssignedTask(admin, [assignedMember.id])).toBe(true);
+    expect(canUpdateAssignedTask(leader, [assignedMember.id])).toBe(true);
   });
 
   it("allows members to update only their assigned tasks", () => {
-    expect(canUpdateAssignedTask(assignedMember, assignedMember.id)).toBe(true);
-    expect(canUpdateAssignedTask(otherMember, assignedMember.id)).toBe(false);
+    expect(canUpdateAssignedTask(assignedMember, [assignedMember.id])).toBe(true);
+    expect(canUpdateAssignedTask(otherMember, [assignedMember.id])).toBe(false);
   });
 
   it("uses the same rules for Kanban task movement", () => {
@@ -73,7 +73,7 @@ function createTask(assignee: User): Task {
     status: "todo",
     priority: "medium",
     dueDate: "2026-06-01",
-    assignee,
+    assignees: [assignee],
     checklist: [],
     comments: [],
     createdAt: "2026-05-01T00:00:00.000Z",
