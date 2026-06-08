@@ -11,7 +11,7 @@ export function getUpcomingDeadlines(projects: Project[], limit = 5): UpcomingDe
         title: task.title,
         dueDate: task.dueDate,
         category: task.category,
-        assigneeName: task.assignee.name,
+        assigneeNames: task.assignees.map((assignee) => assignee.name).join(", "),
         completed: task.status === "done",
       })),
     )
@@ -19,4 +19,3 @@ export function getUpcomingDeadlines(projects: Project[], limit = 5): UpcomingDe
     .sort((first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime())
     .slice(0, limit);
 }
-

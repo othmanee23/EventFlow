@@ -113,7 +113,8 @@ export async function createProjectAction(input: CreateProjectInput): Promise<Cr
 
     const validMemberIds = memberIds.filter((memberId) => existingUserIds.has(memberId));
     const projectSlug = await createUniqueProjectSlug(input.name);
-    const eventDate = createDateFromInput(input.eventDate);
+    const startDate = createDateFromInput(input.startDate);
+    const endDate = createDateFromInput(input.endDate);
 
     const project = await prisma.project.create({
       data: {
@@ -121,7 +122,8 @@ export async function createProjectAction(input: CreateProjectInput): Promise<Cr
         name: input.name.trim(),
         description: input.description.trim(),
         status: "PLANNING",
-        eventDate,
+        startDate,
+        endDate,
         leaderId: input.leaderId,
         members: {
           create: validMemberIds.map((userId) => ({
@@ -135,8 +137,14 @@ export async function createProjectAction(input: CreateProjectInput): Promise<Cr
             category: TASK_CATEGORY_TO_DATABASE[category],
             status: TaskStatus.TODO,
             priority: TaskPriority.MEDIUM,
-            dueDate: eventDate,
-            assigneeId: input.leaderId,
+            dueDate: endDate,
+            assignments: {
+              create: [
+                {
+                  userId: input.leaderId,
+                },
+              ],
+            },
           })),
         },
       },

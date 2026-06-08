@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderKanban, LayoutDashboard, UsersRound } from "lucide-react";
+import { CalendarRange, FolderKanban, LayoutDashboard, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -15,6 +15,11 @@ const navigation = [
     label: "Projects",
     href: "/projects",
     icon: FolderKanban,
+  },
+  {
+    label: "Calendar",
+    href: "/calendar",
+    icon: CalendarRange,
   },
   {
     label: "Users",

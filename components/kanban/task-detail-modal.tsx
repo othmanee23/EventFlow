@@ -12,6 +12,8 @@ import { formatDate } from "@/lib/utils";
 import type { Task } from "@/types/task";
 
 type TaskDetailModalProps = {
+  canManageTasks: boolean;
+  onEditRequested: () => void;
   onChecklistAdd: (taskId: string, label: string) => Promise<boolean>;
   onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
   onCommentAdd: (taskId: string, body: string) => Promise<boolean>;
@@ -21,6 +23,8 @@ type TaskDetailModalProps = {
 };
 
 export function TaskDetailModal({
+  canManageTasks,
+  onEditRequested,
   onChecklistAdd,
   onChecklistToggle,
   onClose,
@@ -35,7 +39,9 @@ export function TaskDetailModal({
   return (
     <TaskDetailModalContent
       onChecklistAdd={onChecklistAdd}
+      canManageTasks={canManageTasks}
       key={task.id}
+      onEditRequested={onEditRequested}
       onChecklistToggle={onChecklistToggle}
       onClose={onClose}
       onCommentAdd={onCommentAdd}
@@ -46,6 +52,8 @@ export function TaskDetailModal({
 }
 
 type TaskDetailModalContentProps = {
+  canManageTasks: boolean;
+  onEditRequested: () => void;
   onChecklistAdd: (taskId: string, label: string) => Promise<boolean>;
   onChecklistToggle: (taskId: string, itemId: string, completed: boolean) => void;
   onClose: () => void;
@@ -55,6 +63,8 @@ type TaskDetailModalContentProps = {
 };
 
 function TaskDetailModalContent({
+  canManageTasks,
+  onEditRequested,
   onChecklistAdd,
   onChecklistToggle,
   onClose,
@@ -126,18 +136,25 @@ function TaskDetailModalContent({
     <Modal className="max-w-2xl" onClose={onClose} open={open} title={task.title}>
       <div className="grid gap-6">
         <div>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <Badge>{TASK_CATEGORIES[task.category]}</Badge>
-            <Badge variant={task.priority === "high" ? "amber" : "gray"}>{task.priority}</Badge>
-            <Badge variant={task.status === "done" ? "green" : "blue"}>{TASK_STATUSES[task.status]}</Badge>
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              <Badge>{TASK_CATEGORIES[task.category]}</Badge>
+              <Badge variant={task.priority === "high" ? "amber" : "gray"}>{task.priority}</Badge>
+              <Badge variant={task.status === "done" ? "green" : "blue"}>{TASK_STATUSES[task.status]}</Badge>
+            </div>
+            {canManageTasks ? (
+              <Button onClick={onEditRequested} type="button" variant="secondary">
+                Edit task
+              </Button>
+            ) : null}
           </div>
           <p className="text-sm leading-6 text-slate-600">{task.description}</p>
         </div>
 
         <dl className="grid gap-4 rounded-md border border-border-soft bg-slate-50 p-4 text-sm sm:grid-cols-2">
           <div>
-            <dt className="font-medium text-slate-950">Assignee</dt>
-            <dd className="mt-1 text-slate-600">{task.assignee.name}</dd>
+            <dt className="font-medium text-slate-950">Assignees</dt>
+            <dd className="mt-1 text-slate-600">{task.assignees.map((assignee) => assignee.name).join(", ")}</dd>
           </div>
           <div>
             <dt className="font-medium text-slate-950">Due date</dt>

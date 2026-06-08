@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const session = await getRequiredSession();
-  const projects = await getProjects();
+  const projects = await getProjects(session.user);
   const users = await getUsers();
 
   return (
