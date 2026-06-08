@@ -15,10 +15,10 @@ export function Modal({ children, className, onClose, open, title, ...props }: M
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <section
         aria-modal="true"
-        className={cn("w-full max-w-xl rounded-md bg-white shadow-xl", className)}
+        className={cn("mx-auto my-6 w-full max-w-xl rounded-md bg-white shadow-xl", className)}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         {...props}
@@ -34,7 +34,7 @@ export function Modal({ children, className, onClose, open, title, ...props }: M
             <X aria-hidden="true" className="h-4 w-4" />
           </button>
         </header>
-        <div className="p-5">{children}</div>
+        <div className="max-h-[min(80vh,48rem)] overflow-y-auto p-5">{children}</div>
       </section>
     </div>
   );

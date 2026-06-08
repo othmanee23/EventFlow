@@ -50,9 +50,12 @@ export function canEditProject(role: UserRole) {
 }
 
 export function canMoveTask(user: User, task: Task) {
-  return canUpdateAssignedTask(user, task.assignee.id);
+  return canUpdateAssignedTask(
+    user,
+    task.assignees.map((assignee) => assignee.id),
+  );
 }
 
-export function canUpdateAssignedTask(user: Pick<User, "id" | "role">, assigneeId: string) {
-  return user.role === "admin" || user.role === "leader" || user.id === assigneeId;
+export function canUpdateAssignedTask(user: Pick<User, "id" | "role">, assigneeIds: string[]) {
+  return user.role === "admin" || user.role === "leader" || assigneeIds.includes(user.id);
 }

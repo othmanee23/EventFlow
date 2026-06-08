@@ -40,7 +40,8 @@ export const mockProjects: Project[] = [
     name: "Atlantic Dialogues 2026",
     description: "Annual flagship conference preparation and coordination.",
     status: "active",
-    eventDate: "2026-12-10",
+    startDate: "2026-12-08",
+    endDate: "2026-12-10",
     leader: mockUsers[1],
     members: [mockUsers[2], mockUsers[3]],
     createdAt: "2026-04-01T09:00:00.000Z",
@@ -55,7 +56,7 @@ export const mockProjects: Project[] = [
         status: "in_progress",
         priority: "high",
         dueDate: "2026-06-15",
-        assignee: mockUsers[1],
+        assignees: [mockUsers[1], mockUsers[2]],
         createdAt: "2026-04-02T10:00:00.000Z",
         updatedAt: "2026-05-07T09:15:00.000Z",
         checklist: [
@@ -92,7 +93,7 @@ export const mockProjects: Project[] = [
         status: "todo",
         priority: "medium",
         dueDate: "2026-07-01",
-        assignee: mockUsers[2],
+        assignees: [mockUsers[2]],
         createdAt: "2026-04-03T11:00:00.000Z",
         updatedAt: "2026-04-22T15:45:00.000Z",
         checklist: [
@@ -114,7 +115,7 @@ export const mockProjects: Project[] = [
         status: "done",
         priority: "medium",
         dueDate: "2026-05-30",
-        assignee: mockUsers[3],
+        assignees: [mockUsers[3]],
         createdAt: "2026-04-04T09:30:00.000Z",
         updatedAt: "2026-05-03T17:00:00.000Z",
         checklist: [
@@ -135,7 +136,8 @@ export const mockProjects: Project[] = [
     name: "Climate Policy Roundtable",
     description: "Focused policy convening for regional climate financing.",
     status: "planning",
-    eventDate: "2026-09-18",
+    startDate: "2026-09-17",
+    endDate: "2026-09-18",
     leader: mockUsers[1],
     members: [mockUsers[2]],
     tasks: [],
@@ -143,4 +145,3 @@ export const mockProjects: Project[] = [
     updatedAt: "2026-05-02T12:30:00.000Z",
   },
 ];
-

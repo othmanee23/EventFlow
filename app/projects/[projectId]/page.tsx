@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { getRequiredSession } from "@/features/auth/auth-service";
 import { getProjectById } from "@/features/projects/project-service";
 import { PROJECT_STATUSES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDateRange } from "@/lib/utils";
 
 type ProjectPageProps = {
   params: Promise<{
@@ -16,7 +16,7 @@ type ProjectPageProps = {
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
   const session = await getRequiredSession();
-  const project = await getProjectById(projectId);
+  const project = await getProjectById(projectId, session.user);
 
   if (!project) {
     notFound();
@@ -30,7 +30,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Badge variant="blue">{PROJECT_STATUSES[project.status]}</Badge>
-                <span className="text-sm text-slate-500">Event date: {formatDate(project.eventDate)}</span>
+                <span className="text-sm text-slate-500">
+                  Event dates: {formatDateRange(project.startDate, project.endDate)}
+                </span>
               </div>
               <p className="max-w-3xl text-sm leading-6 text-slate-600">{project.description}</p>
             </div>
@@ -39,7 +41,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </div>
           </div>
         </section>
-        <KanbanBoard tasks={project.tasks} user={session.user} />
+        <KanbanBoard
+          projectId={project.id}
+          projectUsers={[project.leader, ...project.members.filter((member) => member.id !== project.leader.id)]}
+          tasks={project.tasks}
+          user={session.user}
+        />
       </div>
     </AppShell>
   );

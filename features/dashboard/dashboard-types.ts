@@ -7,7 +7,6 @@ export type UpcomingDeadline = {
   title: string;
   dueDate: string;
   category: TaskCategory;
-  assigneeName: string;
+  assigneeNames: string;
   completed: boolean;
 };
-

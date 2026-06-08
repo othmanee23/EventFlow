@@ -12,30 +12,50 @@ import {
 } from "@dnd-kit/core";
 import { useMemo, useState } from "react";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
+import { TaskEditorModal } from "@/components/kanban/task-editor-modal";
 import { TaskCard } from "@/components/kanban/task-card";
 import { TaskDetailModal } from "@/components/kanban/task-detail-modal";
+import { Button } from "@/components/ui/button";
 import {
   addChecklistItemAction,
   addTaskCommentAction,
+  createTaskAction,
+  deleteTaskAction,
   toggleChecklistItemAction,
+  updateTaskAction,
   updateTaskStatusAction,
 } from "@/features/tasks/task-actions";
 import { TASK_STATUS_ORDER, TASK_STATUSES } from "@/lib/constants";
 import { getTasksByStatus } from "@/features/tasks/task-service";
+import { canAssignTasks } from "@/lib/permissions";
 import type { Comment } from "@/types/comment";
-import type { Task, TaskStatus } from "@/types/task";
+import type { Task, TaskCategory, TaskPriority, TaskStatus } from "@/types/task";
 import type { User } from "@/types/user";
 
 type KanbanBoardProps = {
+  projectId: string;
+  projectUsers: User[];
   tasks: Task[];
   user: User;
 };
 
-export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
+type TaskEditorInput = {
+  assigneeIds: string[];
+  category: TaskCategory;
+  description: string;
+  dueDate: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  title: string;
+};
+
+export function KanbanBoard({ projectId, projectUsers, tasks, user }: KanbanBoardProps) {
   const [boardTasks, setBoardTasks] = useState(tasks);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [taskEditorMode, setTaskEditorMode] = useState<"create" | "edit" | null>(null);
   const [boardError, setBoardError] = useState("");
+  const canManageTasks = canAssignTasks(user.role);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -51,6 +71,10 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
   const selectedTask = useMemo(
     () => boardTasks.find((task) => task.id === selectedTaskId),
     [boardTasks, selectedTaskId],
+  );
+  const editingTask = useMemo(
+    () => (taskEditorMode === "edit" ? boardTasks.find((task) => task.id === selectedTaskId) : undefined),
+    [boardTasks, selectedTaskId, taskEditorMode],
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -184,6 +208,53 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
     return true;
   }
 
+  async function handleTaskCreate(input: TaskEditorInput) {
+    const result = await createTaskAction(projectId, input);
+
+    if (!result.success) {
+      setBoardError(result.message);
+      return false;
+    }
+
+    setBoardTasks((currentTasks) => [...currentTasks, result.task]);
+    setBoardError("");
+    return true;
+  }
+
+  async function handleTaskUpdate(input: TaskEditorInput) {
+    if (!selectedTaskId) {
+      return false;
+    }
+
+    const result = await updateTaskAction(selectedTaskId, input);
+
+    if (!result.success) {
+      setBoardError(result.message);
+      return false;
+    }
+
+    setBoardTasks((currentTasks) => currentTasks.map((task) => (task.id === result.task.id ? result.task : task)));
+    setBoardError("");
+    return true;
+  }
+
+  async function handleTaskDelete() {
+    if (!selectedTaskId) {
+      return;
+    }
+
+    const result = await deleteTaskAction(selectedTaskId);
+
+    if (!result.success) {
+      setBoardError(result.message);
+      throw new Error(result.message);
+    }
+
+    setBoardTasks((currentTasks) => currentTasks.filter((task) => task.id !== selectedTaskId));
+    setSelectedTaskId(null);
+    setBoardError("");
+  }
+
   async function persistTaskStatus(taskId: string, status: TaskStatus) {
     const result = await updateTaskStatusAction(taskId, status);
 
@@ -247,6 +318,13 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
           {boardError}
         </div>
       ) : null}
+      {canManageTasks ? (
+        <div className="flex justify-end">
+          <Button onClick={() => setTaskEditorMode("create")} type="button">
+            Add task
+          </Button>
+        </div>
+      ) : null}
       <section className="grid gap-4 xl:grid-cols-3">
         {TASK_STATUS_ORDER.map((status) => (
           <KanbanColumn
@@ -260,12 +338,24 @@ export function KanbanBoard({ tasks, user }: KanbanBoardProps) {
       </section>
       <DragOverlay>{activeTask ? <TaskCard task={activeTask} /> : null}</DragOverlay>
       <TaskDetailModal
+        canManageTasks={canManageTasks}
+        onEditRequested={() => setTaskEditorMode("edit")}
         onChecklistAdd={handleChecklistAdd}
         onCommentAdd={handleCommentAdd}
         onChecklistToggle={handleChecklistToggle}
         onClose={() => setSelectedTaskId(null)}
-        open={Boolean(selectedTask)}
+        open={Boolean(selectedTask) && taskEditorMode !== "edit"}
         task={selectedTask}
+      />
+      <TaskEditorModal
+        key={taskEditorMode === "edit" ? selectedTaskId ?? "edit-task" : "create-task"}
+        mode={taskEditorMode === "edit" ? "edit" : "create"}
+        onClose={() => setTaskEditorMode(null)}
+        onDelete={taskEditorMode === "edit" ? handleTaskDelete : undefined}
+        onSubmit={taskEditorMode === "edit" ? handleTaskUpdate : handleTaskCreate}
+        open={Boolean(taskEditorMode)}
+        projectUsers={projectUsers}
+        task={editingTask}
       />
     </DndContext>
   );

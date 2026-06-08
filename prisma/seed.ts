@@ -101,7 +101,8 @@ async function main() {
         name: project.name,
         description: project.description,
         status: PROJECT_STATUS_TO_DATABASE[project.status],
-        eventDate: createDate(project.eventDate),
+        startDate: createDate(project.startDate),
+        endDate: createDate(project.endDate),
         leaderId: project.leader.id,
       },
       create: {
@@ -110,7 +111,8 @@ async function main() {
         name: project.name,
         description: project.description,
         status: PROJECT_STATUS_TO_DATABASE[project.status],
-        eventDate: createDate(project.eventDate),
+        startDate: createDate(project.startDate),
+        endDate: createDate(project.endDate),
         leaderId: project.leader.id,
         createdAt: new Date(project.createdAt),
         updatedAt: new Date(project.updatedAt),
@@ -146,7 +148,12 @@ async function main() {
           status: TASK_STATUS_TO_DATABASE[task.status],
           priority: TASK_PRIORITY_TO_DATABASE[task.priority],
           dueDate: createDate(task.dueDate),
-          assigneeId: task.assignee.id,
+          assignments: {
+            deleteMany: {},
+            create: task.assignees.map((assignee) => ({
+              userId: assignee.id,
+            })),
+          },
         },
         create: {
           id: task.id,
@@ -157,7 +164,11 @@ async function main() {
           status: TASK_STATUS_TO_DATABASE[task.status],
           priority: TASK_PRIORITY_TO_DATABASE[task.priority],
           dueDate: createDate(task.dueDate),
-          assigneeId: task.assignee.id,
+          assignments: {
+            create: task.assignees.map((assignee) => ({
+              userId: assignee.id,
+            })),
+          },
           createdAt: new Date(task.createdAt),
           updatedAt: new Date(task.updatedAt),
         },

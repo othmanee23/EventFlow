@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProjectProgress } from "@/features/projects/project-utils";
 import { PROJECT_STATUSES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDateRange } from "@/lib/utils";
 import type { Project } from "@/types/project";
 
 type ProjectCardProps = {
@@ -37,7 +37,7 @@ export function ProjectCard({ disableNavigation = false, project }: ProjectCardP
         <div className="mt-5 grid gap-3 text-sm text-slate-500 sm:grid-cols-3">
           <span className="flex items-center gap-2">
             <CalendarDays aria-hidden="true" className="h-4 w-4" />
-            {formatDate(project.eventDate)}
+            {formatDateRange(project.startDate, project.endDate)}
           </span>
           <span className="flex items-center gap-2">
             <UserRound aria-hidden="true" className="h-4 w-4" />
